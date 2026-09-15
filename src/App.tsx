@@ -283,16 +283,6 @@ export function App() {
               </div>
               <div className="text-[11px] text-purple-600 dark:text-purple-300">{settings.userUniversity || settings.userEmail || 'Mode Lokal'}</div>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-dark-800 border border-purple-300 dark:border-purple-500/40 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-              <img 
-                src="/logo.png" 
-                alt="Avatar" 
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-            </div>
           </div>
         </header>
 

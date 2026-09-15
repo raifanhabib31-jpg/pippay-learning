@@ -14,7 +14,6 @@ import {
   ChevronDown,
   Zap,
   CheckCircle2,
-  Clock,
   Sliders,
   Flame
 } from 'lucide-react';
@@ -51,8 +50,8 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({
   folders,
   materi,
-  kisiKisi,
-  quizResults = [],
+  kisiKisi: _kisiKisi,
+  quizResults: _quizResults = [],
   jadwal,
   settings,
   semesters,
@@ -309,128 +308,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
             </div>
-
-            {/* 4 Interactive Toggle Cards (Matches the Refrigerator, Temperature, AC, Lights cards) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
-              {/* Card 1: Ringkas Modul Kuliah */}
-              <div 
-                onClick={() => setActiveTab('materi')}
-                className="bg-white dark:bg-dark-850 hover:bg-slate-50 dark:hover:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl p-4 transition-all shadow-2xs hover:shadow-md cursor-pointer group flex flex-col justify-between min-h-[120px]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40 group-hover:scale-105 transition-transform">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  {/* ON/OFF Switch Pill */}
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); toggleSwitch('materi'); }}
-                    className={`w-9 h-5 rounded-full flex items-center p-0.5 transition-colors cursor-pointer ${
-                      toggleStates.materi ? 'bg-purple-600' : 'bg-slate-300 dark:bg-dark-700'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      toggleStates.materi ? 'translate-x-4' : 'translate-x-0'
-                    }`} />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {toggleStates.materi ? 'ON' : 'OFF'}
-                  </div>
-                  <h3 className="text-xs font-bold text-slate-800 dark:text-white truncate">Materi Kuliah</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{folders.length} Folder • {materi.length} Dokumen</p>
-                </div>
-              </div>
-
-              {/* Card 2: Latihan Soal AI (Vibrant Active Purple Card from reference) */}
-              <div 
-                onClick={() => setActiveTab('latihan')}
-                className="bg-linear-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border border-purple-400/30 rounded-2xl p-4 transition-all shadow-lg shadow-purple-600/20 hover:shadow-purple-600/35 cursor-pointer group flex flex-col justify-between min-h-[120px]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-white/20 text-white border border-white/30 group-hover:scale-105 transition-transform">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  {/* Active Switch */}
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); toggleSwitch('quiz'); }}
-                    className={`w-9 h-5 rounded-full flex items-center p-0.5 transition-colors cursor-pointer ${
-                      toggleStates.quiz ? 'bg-white' : 'bg-purple-900/50'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full transition-transform ${
-                      toggleStates.quiz ? 'bg-purple-700 translate-x-4' : 'bg-white translate-x-0'
-                    }`} />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-purple-200">
-                    {toggleStates.quiz ? 'ON' : 'OFF'}
-                  </div>
-                  <h3 className="text-xs font-bold text-white truncate">AI Smart Quiz</h3>
-                  <p className="text-[10px] text-purple-200">{quizResults.length} Kuis Selesai</p>
-                </div>
-              </div>
-
-              {/* Card 3: Prediksi Soal Ujian */}
-              <div 
-                onClick={() => setActiveTab('ujian')}
-                className="bg-white dark:bg-dark-850 hover:bg-slate-50 dark:hover:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl p-4 transition-all shadow-2xs hover:shadow-md cursor-pointer group flex flex-col justify-between min-h-[120px]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-accent-orange border border-orange-200 dark:border-orange-800/40 group-hover:scale-105 transition-transform">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); toggleSwitch('ujian'); }}
-                    className={`w-9 h-5 rounded-full flex items-center p-0.5 transition-colors cursor-pointer ${
-                      toggleStates.ujian ? 'bg-accent-orange' : 'bg-slate-300 dark:bg-dark-700'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      toggleStates.ujian ? 'translate-x-4' : 'translate-x-0'
-                    }`} />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {toggleStates.ujian ? 'ON' : 'OFF'}
-                  </div>
-                  <h3 className="text-xs font-bold text-slate-800 dark:text-white truncate">Prediksi Ujian</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{kisiKisi.length} Kisi-Kisi AI</p>
-                </div>
-              </div>
-
-              {/* Card 4: Pengingat Email H-1 */}
-              <div 
-                onClick={() => setActiveTab('jadwal')}
-                className="bg-white dark:bg-dark-850 hover:bg-slate-50 dark:hover:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl p-4 transition-all shadow-2xs hover:shadow-md cursor-pointer group flex flex-col justify-between min-h-[120px]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 group-hover:scale-105 transition-transform">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); toggleSwitch('reminder'); }}
-                    className={`w-9 h-5 rounded-full flex items-center p-0.5 transition-colors cursor-pointer ${
-                      toggleStates.reminder ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-dark-700'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      toggleStates.reminder ? 'translate-x-4' : 'translate-x-0'
-                    }`} />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {toggleStates.reminder ? 'ON' : 'OFF'}
-                  </div>
-                  <h3 className="text-xs font-bold text-slate-800 dark:text-white truncate">Pengingat H-1</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{upcomingJadwal.length} Agenda Aktif</p>
-                </div>
-              </div>
-            </div>
           </div>
+
+
 
           {/* Dial / Circular Speedometer Controller Card (Living Room Temperature style from reference) */}
           <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 shadow-xs relative overflow-hidden">

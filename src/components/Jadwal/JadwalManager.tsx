@@ -229,7 +229,7 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
           className="px-5 py-3 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-950/20 transition-all transform active:scale-95 shrink-0 relative z-10"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Tambah Agenda Baru</span>
+          <span>Tambah Agenda Baru</span>
         </button>
       </div>
 
