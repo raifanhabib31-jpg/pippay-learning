@@ -1,12 +1,3 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import mammoth from 'mammoth';
-import JSZip from 'jszip';
-
-// Set up pdf.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
-}
-
 export interface ExtractedFileResult {
   text: string;
   fileName: string;
@@ -43,6 +34,13 @@ export async function parseDocumentFile(file: File): Promise<ExtractedFileResult
 
 async function extractTextFromPDF(file: File): Promise<string> {
   try {
+    // Dynamic import to prevent bundle crashing on initial page load / unsupported browsers
+    const pdfjsLib = await import('pdfjs-dist');
+    
+    if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
@@ -60,13 +58,21 @@ async function extractTextFromPDF(file: File): Promise<string> {
     return fullText.trim() || 'Teks tidak ditemukan atau dokumen berupa pindaian gambar.';
   } catch (error) {
     console.error('PDF parsing error:', error);
-    // Fallback simple buffer extraction
-    return `[Gagal mengekstrak teks PDF secara otomatis. Silakan salin dan tempel teks dari file ${file.name} ke kolom input jika diperlukan.]`;
+    // Fallback simple raw text extraction
+    try {
+      const rawText = await file.text();
+      const clean = rawText.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (clean.length > 50) return clean;
+    } catch {
+      // ignore
+    }
+    return `[Gagal mengekstrak teks PDF secara otomatis. Silakan salin dan tempel teks dari file ${file.name} ke kolom input manual jika diperlukan.]`;
   }
 }
 
 async function extractTextFromDocx(file: File): Promise<string> {
   try {
+    const mammoth = (await import('mammoth')).default || (await import('mammoth'));
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.extractRawText({ arrayBuffer });
     return result.value.trim() || 'Dokumen kosong.';
@@ -78,6 +84,7 @@ async function extractTextFromDocx(file: File): Promise<string> {
 
 async function extractTextFromPptx(file: File): Promise<string> {
   try {
+    const JSZip = (await import('jszip')).default || (await import('jszip'));
     const arrayBuffer = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(arrayBuffer);
     let fullText = '';
