@@ -12,6 +12,58 @@ export interface SendEmailResult {
   };
 }
 
+async function sendViaResendEndpoint(
+  apiKey: string,
+  from: string,
+  to: string,
+  subject: string,
+  html: string,
+  text: string
+): Promise<{ success: boolean; message: string }> {
+  // Try Netlify serverless proxy first (bypasses CORS restrictions)
+  try {
+    const netlifyRes = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, from, to, subject, html, text })
+    });
+
+    if (netlifyRes.ok) {
+      return { success: true, message: 'Berhasil dikirim via Resend serverless function.' };
+    }
+
+    const netlifyErr = await netlifyRes.json().catch(() => ({}));
+    if (netlifyRes.status !== 404 && netlifyRes.status !== 405) {
+      throw new Error(netlifyErr.message || `HTTP ${netlifyRes.status}`);
+    }
+  } catch (proxyError: any) {
+    console.warn('Proxy route failed, trying direct endpoint:', proxyError);
+  }
+
+  // Fallback: Direct Resend API
+  const directRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey.trim()}`
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject,
+      html,
+      text
+    })
+  });
+
+  if (!directRes.ok) {
+    const errData = await directRes.json().catch(() => ({}));
+    throw new Error(errData.message || `HTTP ${directRes.status}: ${directRes.statusText}`);
+  }
+
+  return { success: true, message: 'Berhasil dikirim via Resend Direct API.' };
+}
+
 export const emailService = {
   /**
    * Mengirim pengingat jadwal kuliah/ujian ke alamat email pengguna (Resend / EmailJS / Simulasi)
@@ -52,57 +104,40 @@ Tips Belajar:
 Semangat belajarnya!
 PippayLearning AI Assistant`;
 
-    // 1. Try Resend API (Direct REST API)
+    const htmlContent = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0f0f15; color: #f1f5f9; border-radius: 16px; border: 1px solid #282838;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #a855f7; font-size: 24px; margin: 0;">PippayLearning</h1>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Personal Academic & Study Assistant</p>
+        </div>
+        
+        <div style="background: #181824; border: 1px solid #333348; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+          <span style="display: inline-block; padding: 4px 10px; background: rgba(168, 85, 247, 0.2); color: #c084fc; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase;">
+            ${typeLabels[jadwal.type] || 'Pengingat'}
+          </span>
+          <h2 style="color: #ffffff; font-size: 18px; margin: 12px 0 6px 0;">${jadwal.title}</h2>
+          <p style="color: #cbd5e1; font-size: 13px; margin: 0;">Mata Kuliah: <strong>${jadwal.courseName}</strong></p>
+        </div>
+
+        <div style="background: #12121c; border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
+          <p style="margin: 0 0 8px 0;"><strong>Tanggal:</strong> ${jadwal.date}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Waktu:</strong> ${jadwal.time} WIB</p>
+          <p style="margin: 0 0 8px 0;"><strong>Lokasi / Link:</strong> ${jadwal.locationOrLink || '-'}</p>
+          <p style="margin: 0;"><strong>Catatan:</strong> ${jadwal.notes || '-'}</p>
+        </div>
+
+        <div style="text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #282838; padding-top: 16px;">
+          Email ini dikirim otomatis oleh PippayLearning via Resend API.
+        </div>
+      </div>
+    `;
+
+    // 1. Try Resend API
     const resendKey = settings.resendApiKey?.trim();
     if (resendKey) {
       const sender = settings.resendSenderEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
       try {
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${resendKey}`
-          },
-          body: JSON.stringify({
-            from: sender,
-            to: [recipientEmail],
-            subject: subject,
-            text: body,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0f0f15; color: #f1f5f9; border-radius: 16px; border: 1px solid #282838;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h1 style="color: #a855f7; font-size: 24px; margin: 0;">PippayLearning</h1>
-                  <p style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Personal Academic & Study Assistant</p>
-                </div>
-                
-                <div style="background: #181824; border: 1px solid #333348; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                  <span style="display: inline-block; padding: 4px 10px; background: rgba(168, 85, 247, 0.2); color: #c084fc; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase;">
-                    ${typeLabels[jadwal.type] || 'Pengingat'}
-                  </span>
-                  <h2 style="color: #ffffff; font-size: 18px; margin: 12px 0 6px 0;">${jadwal.title}</h2>
-                  <p style="color: #cbd5e1; font-size: 13px; margin: 0;">Mata Kuliah: <strong>${jadwal.courseName}</strong></p>
-                </div>
-
-                <div style="background: #12121c; border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
-                  <p style="margin: 0 0 8px 0;"><strong>Tanggal:</strong> ${jadwal.date}</p>
-                  <p style="margin: 0 0 8px 0;"><strong>Waktu:</strong> ${jadwal.time} WIB</p>
-                  <p style="margin: 0 0 8px 0;"><strong>Lokasi / Link:</strong> ${jadwal.locationOrLink || '-'}</p>
-                  <p style="margin: 0;"><strong>Catatan:</strong> ${jadwal.notes || '-'}</p>
-                </div>
-
-                <div style="text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #282838; padding-top: 16px;">
-                  Email ini dikirim otomatis oleh PippayLearning via Resend API.
-                </div>
-              </div>
-            `
-          })
-        });
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.message || `HTTP ${response.status}: ${response.statusText}`);
-        }
-
+        await sendViaResendEndpoint(resendKey, sender, recipientEmail, subject, htmlContent, body);
         return {
           success: true,
           message: `Email pengingat berhasil dikirim ke ${recipientEmail} via Resend API!`,
@@ -156,7 +191,7 @@ PippayLearning AI Assistant`;
     // 3. Fallback simulation with preview
     return {
       success: true,
-      message: `Pengingat berhasil dijadwalkan & disimulasikan ke ${recipientEmail}. Masukkan Resend API Key atau EmailJS di menu Pengaturan untuk pengiriman riil.`,
+      message: `Pengingat berhasil disimulasikan ke ${recipientEmail}. Masukkan Resend API Key di menu Pengaturan untuk pengiriman riil.`,
       previewContent: {
         to: recipientEmail,
         subject,
@@ -170,31 +205,17 @@ PippayLearning AI Assistant`;
    */
   async testResendApiKey(apiKey: string, toEmail: string, fromEmail?: string): Promise<{ success: boolean; message: string }> {
     const sender = fromEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
+    const subject = '[PippayLearning] Tes Koneksi Resend API Berhasil!';
+    const html = `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #0f0f15; color: #f1f5f9; border-radius: 16px;">
+        <h2 style="color: #a855f7;">Koneksi Resend API Berhasil!</h2>
+        <p style="color: #cbd5e1; font-size: 14px;">Selamat! Resend API Key Anda telah terhubung dengan PippayLearning. Sekarang semua pengingat jadwal kuliah dan ujian akan otomatis terkirim ke email Anda.</p>
+      </div>
+    `;
+    const text = 'Selamat! Resend API Key Anda telah terhubung dengan PippayLearning.';
+
     try {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`
-        },
-        body: JSON.stringify({
-          from: sender,
-          to: [toEmail.trim()],
-          subject: '[PippayLearning] Tes Koneksi Resend API Berhasil!',
-          html: `
-            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; background: #0f0f15; color: #f1f5f9; border-radius: 16px;">
-              <h2 style="color: #a855f7;">Koneksi Resend API Berhasil!</h2>
-              <p style="color: #cbd5e1; font-size: 14px;">Selamat! Resend API Key Anda telah terhubung dengan PippayLearning. Sekarang semua pengingat jadwal kuliah dan ujian akan otomatis terkirim ke email Anda.</p>
-            </div>
-          `
-        })
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || `Status ${response.status}`);
-      }
-
+      await sendViaResendEndpoint(apiKey, sender, toEmail, subject, html, text);
       return {
         success: true,
         message: `Email tes berhasil dikirim ke ${toEmail} via Resend!`
