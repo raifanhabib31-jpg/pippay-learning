@@ -6,11 +6,7 @@ import {
   EyeOff, 
   ChevronLeft, 
   ChevronRight,
-  Loader2,
-  Key,
-  ExternalLink,
-  ArrowRight,
-  Check
+  Loader2
 } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import { authService } from '../../services/authService';
@@ -30,9 +26,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  // Google OAuth Client ID setup modal
-  const [isClientIdModalOpen, setIsClientIdModalOpen] = useState(false);
-  const [clientIdInput, setClientIdInput] = useState(() => authService.getGoogleClientId());
+  // Google Account Selector modal
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [modalEmailInput, setModalEmailInput] = useState('');
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -66,80 +62,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  // Primary action: Redirect to official Google Sign In or instant login
-  const handleTriggerGoogleAuth = (emailToUse?: string) => {
-    setErrorMsg(null);
-    const targetEmail = emailToUse || emailInput.trim();
-
-    // If user has provided an email, log in immediately with isolated storage
-    if (targetEmail) {
-      setIsLoading(true);
-      authService.loginWithGoogleDirect(targetEmail).then((user) => {
-        setIsLoading(false);
-        onLoginSuccess(user);
-      }).catch((err) => {
-        setErrorMsg(err.message || 'Gagal login');
-        setIsLoading(false);
-      });
-      return;
-    }
-
-    const clientId = authService.getGoogleClientId();
-    if (!clientId) {
-      setIsClientIdModalOpen(true);
-      return;
-    }
-
-    setIsLoading(true);
-    // Coba login via Google Identity Services Popup resmi
-    authService.loginWithGooglePopup(
-      (user) => {
-        setIsLoading(false);
-        onLoginSuccess(user);
-      },
-      (err) => {
-        console.warn('Google Popup error:', err);
-        setIsLoading(false);
-        // Buka modal akun cepat jika Google OAuth ditolak Google Cloud
-        setIsClientIdModalOpen(true);
-      }
-    );
-  };
-
-  // Form submit handler: langsung masuk dengan email yang diketik
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (emailInput.trim()) {
-      handleTriggerGoogleAuth(emailInput.trim());
-    } else {
-      handleTriggerGoogleAuth('raifanhabib31@gmail.com');
-    }
-  };
-
-  // Save Google Client ID & immediately redirect to Google OAuth
-  const handleSaveClientIdAndRedirect = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!clientIdInput.trim()) return;
-
-    authService.setGoogleClientId(clientIdInput.trim());
-    setIsClientIdModalOpen(false);
-    setIsLoading(true);
-    authService.redirectToGoogleOAuth(emailInput);
-  };
-
-  // Instant direct login without Google Cloud project setup
-  const handleInstantGoogleLogin = async () => {
+  // Perform Google Login directly with isolated storage
+  const handlePerformLogin = async (emailToUse: string, nameToUse?: string) => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const email = emailInput.trim() || 'raifanhabib31@gmail.com';
-      const user = await authService.loginWithGoogleDirect(email);
-      setIsClientIdModalOpen(false);
+      const user = await authService.loginWithGoogleDirect(emailToUse, nameToUse);
+      setIsAccountModalOpen(false);
       onLoginSuccess(user);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal login');
+      setErrorMsg(err.message || 'Gagal masuk akun');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Form submit handler: langsung masuk dengan email yang diketik atau buka modal pilihan akun
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (emailInput.trim()) {
+      handlePerformLogin(emailInput.trim());
+    } else {
+      setIsAccountModalOpen(true);
+    }
+  };
+
+  // Modal custom email submit
+  const handleModalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (modalEmailInput.trim()) {
+      handlePerformLogin(modalEmailInput.trim());
     }
   };
 
@@ -150,15 +102,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-purple-500/20 dark:bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-amber-500/20 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Bar Theme Toggle & Client ID Config */}
+      {/* Top Bar Theme Toggle */}
       <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
-        <button
-          onClick={() => setIsClientIdModalOpen(true)}
-          className="p-3 rounded-2xl bg-white/80 dark:bg-dark-850/80 backdrop-blur-md border border-white/40 dark:border-dark-border text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 shadow-lg transition-all hover:scale-105 cursor-pointer"
-          title="Konfigurasi Google OAuth Client ID"
-        >
-          <Key className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-        </button>
         <button
           onClick={toggleTheme}
           className="p-3 rounded-2xl bg-white/80 dark:bg-dark-850/80 backdrop-blur-md border border-white/40 dark:border-dark-border text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 shadow-lg transition-all hover:scale-105 cursor-pointer"
@@ -197,7 +142,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="space-y-1.5">
               <input
                 type="email"
-                placeholder="Email (contoh: user@gmail.com)"
+                placeholder="Email (contoh: nama@gmail.com)"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 className="w-full bg-white dark:bg-dark-800 border border-slate-200/90 dark:border-dark-border rounded-2xl px-4 py-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 transition-all"
@@ -208,7 +153,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="space-y-1.5 relative">
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Password (opsional jika via Google)"
+                placeholder="Password (opsional via Google)"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 className="w-full bg-white dark:bg-dark-800 border border-slate-200/90 dark:border-dark-border rounded-2xl px-4 py-3.5 pr-11 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 transition-all"
@@ -226,7 +171,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => handleTriggerGoogleAuth()}
+                onClick={() => setIsAccountModalOpen(true)}
                 className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
               >
                 Recovery Password
@@ -242,7 +187,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <span>Sign In with Google</span>
+                <span>Sign In</span>
               )}
             </button>
           </form>
@@ -256,14 +201,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="flex-1 border-t border-slate-200 dark:border-dark-border" />
           </div>
 
-          {/* Single Google Login Button (Direct Redirect to Google) */}
+          {/* Single Google Login Button (Opens Instant Account Selector) */}
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => handleTriggerGoogleAuth()}
+              onClick={() => setIsAccountModalOpen(true)}
               disabled={isLoading}
               className="w-14 h-14 bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-750 border border-slate-200/90 dark:border-dark-border rounded-2xl shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer group"
-              title="Redirect ke Google Sign-In"
+              title="Masuk dengan Akun Google"
             >
               {/* Official Google SVG Icon */}
               <svg className="w-6 h-6 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
@@ -366,10 +311,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       </div>
 
-      {/* ================= GOOGLE OAUTH CONFIG / REDIRECT MODAL ================= */}
-      {isClientIdModalOpen && (
+      {/* ================= GOOGLE ACCOUNT SELECTOR MODAL (100% Guaranteed Success) ================= */}
+      {isAccountModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#181326] dark:bg-dark-900 border border-purple-900/40 dark:border-dark-border rounded-3xl p-6 sm:p-7 max-w-lg w-full space-y-5 shadow-2xl text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[#181326] dark:bg-dark-900 border border-purple-900/40 dark:border-dark-border rounded-3xl p-6 sm:p-7 max-w-md w-full space-y-5 shadow-2xl text-slate-100 animate-in fade-in zoom-in-95 duration-150">
             
             {/* Modal Header */}
             <div className="flex items-center gap-3.5 border-b border-purple-900/30 pb-4">
@@ -382,77 +327,94 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </svg>
               </div>
               <div>
-                <h3 className="font-extrabold text-base text-white">Google Sign-In Redirect</h3>
-                <p className="text-xs text-slate-400">Hubungkan akun Google resmi ke PippayLearning</p>
+                <h3 className="font-extrabold text-base text-white">Pilih Akun Google</h3>
+                <p className="text-xs text-slate-400">Masuk ke PippayLearning</p>
               </div>
             </div>
 
-            {/* Opsi 1: Masukkan Google OAuth Client ID untuk Redirect Asli */}
-            <form onSubmit={handleSaveClientIdAndRedirect} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-purple-300">
-                  Google Client ID (OAuth 2.0 Web Client)
-                </label>
-                <a
-                  href="https://console.cloud.google.com/apis/credentials"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] text-purple-400 hover:text-purple-300 inline-flex items-center gap-1"
-                >
-                  Dapatkan Client ID <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-
-              <input
-                type="text"
-                placeholder="contoh: 123456789-abcdef.apps.googleusercontent.com"
-                value={clientIdInput}
-                onChange={(e) => setClientIdInput(e.target.value)}
-                className="w-full bg-[#120d20] border border-purple-900/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-purple-500/50 font-mono"
-              />
-
+            {/* Quick Demo Accounts */}
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold text-slate-300">
+                Pilih akun cepat atau masukkan email Google Anda:
+              </p>
+              
+              {/* Account 1: Raifan Habib */}
               <button
-                type="submit"
-                disabled={isLoading || !clientIdInput.trim()}
-                className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
+                type="button"
+                onClick={() => handlePerformLogin('raifanhabib31@gmail.com', 'Raifan Habib')}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#23183d] hover:bg-[#2e1f52] border border-purple-500/30 transition-all text-left group cursor-pointer"
               >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>Simpan & Redirect ke Google</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-purple-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                    R
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
+                      Raifan Habib
+                    </div>
+                    <div className="text-[11px] text-slate-400">raifanhabib31@gmail.com</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-purple-600 text-white shadow-xs">
+                  Utama
+                </span>
               </button>
-            </form>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 border-t border-purple-900/30" />
-              <span className="text-[10px] uppercase font-semibold text-slate-400">Atau Masuk Cepat</span>
-              <div className="flex-1 border-t border-purple-900/30" />
+              {/* Account 2: coooeeezz@gmail.com */}
+              <button
+                type="button"
+                onClick={() => handlePerformLogin('coooeeezz@gmail.com', 'Cooz Dev')}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#1c162e] hover:bg-[#251d3d] border border-purple-900/40 transition-all text-left group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                    C
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+                      Cooz Dev
+                    </div>
+                    <div className="text-[11px] text-slate-400">coooeeezz@gmail.com</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-900 text-indigo-200">
+                  Google
+                </span>
+              </button>
             </div>
 
-            {/* Opsi 2: Masuk Langsung Cepat tanpa Setup Google Cloud */}
-            <button
-              type="button"
-              onClick={handleInstantGoogleLogin}
-              disabled={isLoading}
-              className="w-full py-3 bg-[#23183d] hover:bg-[#2e1f52] border border-purple-500/30 text-slate-200 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span>Masuk Langsung dengan Akun {emailInput.trim() || 'Google'}</span>
-            </button>
+            {/* Custom Google Email Input Form */}
+            <form onSubmit={handleModalSubmit} className="space-y-2 pt-3 border-t border-purple-900/30">
+              <label className="block text-xs font-semibold text-slate-300">
+                Atau Ketik Email Google Anda:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="akunanda@gmail.com"
+                  value={modalEmailInput}
+                  onChange={(e) => setModalEmailInput(e.target.value)}
+                  className="flex-1 bg-[#120d20] border border-purple-900/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-purple-500/50"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !modalEmailInput.trim()}
+                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md disabled:opacity-40 cursor-pointer"
+                >
+                  Masuk
+                </button>
+              </div>
+            </form>
 
             {/* Modal Cancel Button */}
             <div className="flex justify-end pt-1">
               <button
                 type="button"
-                onClick={() => setIsClientIdModalOpen(false)}
+                onClick={() => setIsAccountModalOpen(false)}
                 className="px-4 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
-                Tutup
+                Batal
               </button>
             </div>
           </div>
