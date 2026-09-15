@@ -131,8 +131,8 @@ export interface DailyGradeItem {
 export interface AppSettings {
   geminiApiKey: string;
   geminiModel: string;
-  openaiApiKey?: string;
-  openaiModel?: string; // contoh: 'gpt-4o-mini' | 'gpt-4o'
+  kimiApiKey?: string;
+  kimiModel?: string; // contoh: 'moonshot-v1-8k' | 'moonshot-v1-32k' | 'moonshot-v1-128k'
   userName: string;
   userTitle?: string; // contoh: "Mahasiswa Berprestasi"
   userUniversity?: string; // contoh: "Universitas Indonesia"

@@ -1293,7 +1293,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   onChange={(e) => setSummaryMode(e.target.value as SummaryType)}
                   className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 >
-                  <option value="dual_agent">🤖 Double Agent (ChatGPT Narasi + Gemini Audit Fakta)</option>
+                  <option value="dual_agent">🤖 Double Agent (Kimi AI Narasi + Gemini Audit Fakta)</option>
                   <option value="lengkap">Lengkap & Komprehensif (Gemini Single-Agent)</option>
                   <option value="poin_kunci">Poin-Poin Kunci Saja</option>
                   <option value="rumus_definisi">Fokus Rumus & Definisi</option>
@@ -1301,13 +1301,13 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 </select>
 
                 {summaryMode === 'dual_agent' && (
-                  <div className="p-3 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/40 text-xs text-teal-900 dark:text-teal-200 space-y-1 animate-in fade-in duration-200">
-                    <div className="font-bold flex items-center gap-1.5 text-teal-700 dark:text-teal-300">
+                  <div className="p-3 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/40 text-xs text-cyan-900 dark:text-cyan-200 space-y-1 animate-in fade-in duration-200">
+                    <div className="font-bold flex items-center gap-1.5 text-cyan-700 dark:text-cyan-300">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Pipeline Double Agent AI Aktif</span>
+                      <span>Pipeline Double Agent AI Aktif (Gemini + Kimi AI)</span>
                     </div>
-                    <p className="text-[11px] text-teal-700/90 dark:text-teal-300/80 leading-relaxed">
-                      1. <b>Gemini</b> mengekstrak fakta & rumus otentik &rarr; 2. <b>ChatGPT</b> menulis narasi storytelling komunikatif &rarr; 3. <b>Gemini</b> mengaudit & memvalidasi keakuratan 100%.
+                    <p className="text-[11px] text-cyan-700/90 dark:text-cyan-300/80 leading-relaxed">
+                      1. <b>Gemini AI</b> mengekstrak fakta & rumus otentik &rarr; 2. <b>Kimi AI</b> menulis narasi storytelling komunikatif &rarr; 3. <b>Gemini AI</b> mengaudit & memvalidasi keakuratan 100%.
                     </p>
                   </div>
                 )}
