@@ -18,6 +18,7 @@ import {
 import type { AppSettings } from '../../types';
 import { storageService } from '../../services/storageService';
 import { emailService } from '../../services/emailService';
+import { openaiService } from '../../services/openaiService';
 
 interface SettingsManagerProps {
   settings: AppSettings;
@@ -32,10 +33,13 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
 }) => {
   const [formData, setFormData] = useState<AppSettings>(settings);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showOpenAiKey, setShowOpenAiKey] = useState(false);
   const [showResendKey, setShowResendKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [openAiTestStatus, setOpenAiTestStatus] = useState<string | null>(null);
+  const [isOpenAiTesting, setIsOpenAiTesting] = useState(false);
   const [emailTestStatus, setEmailTestStatus] = useState<string | null>(null);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [showEmailJsConfig, setShowEmailJsConfig] = useState(false);
@@ -85,6 +89,24 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleTestOpenAiKey = async () => {
+    if (!formData.openaiApiKey?.trim()) {
+      setOpenAiTestStatus('Masukkan OpenAI API Key terlebih dahulu.');
+      return;
+    }
+
+    setIsOpenAiTesting(true);
+    setOpenAiTestStatus(null);
+
+    const res = await openaiService.testConnection(
+      formData.openaiApiKey,
+      formData.openaiModel || 'gpt-4o-mini'
+    );
+
+    setOpenAiTestStatus(res.message);
+    setIsOpenAiTesting(false);
   };
 
   const handleTestResendEmail = async () => {
@@ -358,6 +380,104 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                   : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300'
               }`}>
                 {testStatus}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Section 2.5: OpenAI (ChatGPT) Engine for Double-Agent Collaboration */}
+        <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 shadow-xs space-y-4 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-dark-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-teal-100 dark:bg-teal-500/20 border border-teal-200 dark:border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                <Key className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">OpenAI (ChatGPT) Engine</h3>
+                  <span className="px-2 py-0.5 rounded-md bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-[10px] font-bold border border-teal-200 dark:border-teal-800/40">
+                    Dual-Agent Partner
+                  </span>
+                </div>
+                <p className="text-[11px] text-teal-600 dark:text-teal-300 font-medium">
+                  Berfungsi sebagai <b>Narrator / Storyteller</b> dalam mode Double Agent AI
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://platform.openai.com/api-keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-semibold self-start sm:self-auto"
+            >
+              <span>Dapatkan OpenAI Key</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="space-y-4 text-xs">
+            <div>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
+                OpenAI API Key (sk-...)
+              </label>
+              <div className="relative">
+                <input
+                  type={showOpenAiKey ? 'text' : 'password'}
+                  placeholder="sk-proj-..."
+                  value={formData.openaiApiKey || ''}
+                  onChange={(e) => setFormData({ ...formData, openaiApiKey: e.target.value.trim() })}
+                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl pl-3.5 pr-10 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-teal-500/40 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOpenAiKey(!showOpenAiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                >
+                  {showOpenAiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Opsional. Jika diisi, mode ringkasan <b>Double Agent</b> akan aktif: ChatGPT membuat narasi belajar & Gemini mengekstrak serta mengoreksi fakta.
+              </p>
+            </div>
+
+            {/* Model Selection for OpenAI */}
+            <div className="space-y-3">
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold">
+                Pilih Model ChatGPT
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={formData.openaiModel || 'gpt-4o-mini'}
+                  onChange={(e) => setFormData({ ...formData, openaiModel: e.target.value })}
+                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="gpt-4o-mini">GPT-4o Mini (Direkomendasikan - Cepat, Ringan & Hemat Biaya)</option>
+                  <option value="gpt-4o">GPT-4o (Kemampuan Narasi Tertinggi & Kompleks)</option>
+                </select>
+
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={handleTestOpenAiKey}
+                    disabled={isOpenAiTesting || !formData.openaiApiKey}
+                    className="w-full py-2.5 px-4 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-2xl font-semibold border border-slate-200 dark:border-dark-border flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
+                  >
+                    {isOpenAiTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+                    <span>Uji Koneksi ChatGPT</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {openAiTestStatus && (
+              <div className={`p-3 rounded-2xl border text-xs ${
+                openAiTestStatus.includes('Berhasil') 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300' 
+                  : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300'
+              }`}>
+                {openAiTestStatus}
               </div>
             )}
           </div>

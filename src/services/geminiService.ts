@@ -66,6 +66,13 @@ async function callGemini(prompt: string, systemInstruction?: string): Promise<s
 
 export const geminiService = {
   /**
+   * Panggilan langsung Gemini API
+   */
+  async callRawGemini(prompt: string, systemInstruction?: string): Promise<string> {
+    return callGemini(prompt, systemInstruction);
+  },
+
+  /**
    * Meringkas materi dokumen (PDF/PPTX/DOCX/Teks) berdasarkan mode ringkasan
    */
   async summarizeDocument(
@@ -80,6 +87,7 @@ export const geminiService = {
       poin_kunci: `Ekstrak HANYA poin-poin paling esensial, fakta penting, dan highlight utama dalam bentuk bullet points singkat, padat, dan langsung ke inti pembahasan (High-Yield Study Notes).`,
       rumus_definisi: `Fokuskan ekstraksi pada daftar rumus matematika/algoritma, definisi istilah teknis, notasi, dan hukum/prinsip penting lengkap dengan arti variabel atau penjelasan singkatnya.`,
       cheatsheet: `Buat lembar contekan ujian (1-page Exam Cheat Sheet) ultra ringkas: rangkuman langkah-langkah, rumus cepat, tabel ringkas, dan jebakan soal yang sering muncul.`,
+      dual_agent: `Buat penjelasan naratif edukatif komprehensif berbasis kolaborasi multi-agent: analogi dunia nyata mengalir, contoh kasus praktis, serta verifikasi rumus & definisi 100% akurat.`,
     };
 
     const prompt = `Anda adalah asisten dosen dan tutor akademik pintar.

@@ -356,6 +356,8 @@ const DEFAULT_DAILY_GRADES: DailyGradeItem[] = [
 const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: '',
   geminiModel: 'gemini-1.5-flash',
+  openaiApiKey: '',
+  openaiModel: 'gpt-4o-mini',
   userName: 'Raifan Habib',
   userTitle: 'Mahasiswa Berprestasi',
   userUniversity: 'Fakultas Ilmu Komputer',

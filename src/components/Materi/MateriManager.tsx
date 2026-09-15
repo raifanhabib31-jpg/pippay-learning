@@ -34,6 +34,7 @@ import remarkGfm from 'remark-gfm';
 import type { Folder, Materi, SummaryType, Chapter } from '../../types';
 import { parseDocumentFile } from '../../services/fileParser';
 import { geminiService } from '../../services/geminiService';
+import { dualAgentService } from '../../services/dualAgentService';
 
 /* ─── ImageGallery: tampilan galeri gambar halaman dokumen ─── */
 const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
@@ -266,14 +267,27 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
       const targetCourse = folders.find(f => f.id === targetFolderId)?.name || 'Umum';
       
-      setStatusMessage('Gemini AI sedang menganalisis & merangkum...');
-      const summaryResult = await geminiService.summarizeDocument(
-        contentToSummarize,
-        summaryMode,
-        targetCourse,
-        title,
-        additionalPrompt.trim() || undefined
-      );
+      let summaryResult: string;
+      if (summaryMode === 'dual_agent') {
+        summaryResult = await dualAgentService.generateDualAgentNarrative(
+          contentToSummarize,
+          targetCourse,
+          title,
+          additionalPrompt.trim() || undefined,
+          (prog) => {
+            setStatusMessage(`[${prog.agentName}] ${prog.stageName}`);
+          }
+        );
+      } else {
+        setStatusMessage('Gemini AI sedang menganalisis & merangkum...');
+        summaryResult = await geminiService.summarizeDocument(
+          contentToSummarize,
+          summaryMode,
+          targetCourse,
+          title,
+          additionalPrompt.trim() || undefined
+        );
+      }
 
       setStatusMessage('Menyusun Bab & Sub-Bab terstruktur...');
       const chaptersResult = await geminiService.extractChaptersFromContent(
@@ -1270,7 +1284,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
               </div>
 
               {/* Summary Mode Selector */}
-              <div>
+              <div className="space-y-2">
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Format Ringkasan AI
                 </label>
@@ -1279,11 +1293,24 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   onChange={(e) => setSummaryMode(e.target.value as SummaryType)}
                   className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 >
-                  <option value="lengkap">Lengkap & Komprehensif (Rekomendasi)</option>
+                  <option value="dual_agent">🤖 Double Agent (ChatGPT Narasi + Gemini Audit Fakta)</option>
+                  <option value="lengkap">Lengkap & Komprehensif (Gemini Single-Agent)</option>
                   <option value="poin_kunci">Poin-Poin Kunci Saja</option>
                   <option value="rumus_definisi">Fokus Rumus & Definisi</option>
                   <option value="cheatsheet">Cheatsheet Cepat Ujian</option>
                 </select>
+
+                {summaryMode === 'dual_agent' && (
+                  <div className="p-3 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/40 text-xs text-teal-900 dark:text-teal-200 space-y-1 animate-in fade-in duration-200">
+                    <div className="font-bold flex items-center gap-1.5 text-teal-700 dark:text-teal-300">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Pipeline Double Agent AI Aktif</span>
+                    </div>
+                    <p className="text-[11px] text-teal-700/90 dark:text-teal-300/80 leading-relaxed">
+                      1. <b>Gemini</b> mengekstrak fakta & rumus otentik &rarr; 2. <b>ChatGPT</b> menulis narasi storytelling komunikatif &rarr; 3. <b>Gemini</b> mengaudit & memvalidasi keakuratan 100%.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Upload Type Toggle */}

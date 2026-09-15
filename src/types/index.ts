@@ -8,7 +8,7 @@ export interface Folder {
   createdAt: string;
 }
 
-export type SummaryType = 'lengkap' | 'poin_kunci' | 'rumus_definisi' | 'cheatsheet';
+export type SummaryType = 'lengkap' | 'poin_kunci' | 'rumus_definisi' | 'cheatsheet' | 'dual_agent';
 
 export interface Chapter {
   id: string;
@@ -131,6 +131,8 @@ export interface DailyGradeItem {
 export interface AppSettings {
   geminiApiKey: string;
   geminiModel: string;
+  openaiApiKey?: string;
+  openaiModel?: string; // contoh: 'gpt-4o-mini' | 'gpt-4o'
   userName: string;
   userTitle?: string; // contoh: "Mahasiswa Berprestasi"
   userUniversity?: string; // contoh: "Universitas Indonesia"
