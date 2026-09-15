@@ -1,6 +1,0 @@
-name = "pippay-learning"
-pages_build_output_dir = "dist"
-
-[vars]
-# Set secrets via: wrangler pages secret put VITE_RESEND_API_KEY
-# Or via Cloudflare Pages dashboard → Settings → Environment variables
