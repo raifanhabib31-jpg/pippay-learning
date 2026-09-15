@@ -403,9 +403,18 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">
-                Email Pengirim (Sender Email)
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-slate-300 font-semibold">
+                  Email Pengirim (Sender Email)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, resendSenderEmail: 'PippayLearning <onboarding@resend.dev>' })}
+                  className="text-[11px] text-emerald-400 hover:underline"
+                >
+                  Gunakan Default (onboarding@resend.dev)
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="PippayLearning <onboarding@resend.dev>"
@@ -414,7 +423,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                 className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                Gunakan default <code className="text-emerald-400 font-mono">PippayLearning &lt;onboarding@resend.dev&gt;</code> untuk testing, atau gunakan domain email Anda sendiri.
+                ⚠️ <strong>Catatan Resend:</strong> Jangan gunakan alamat <code className="text-amber-400 font-mono">@gmail.com</code> sebagai pengirim. Gunakan default <code className="text-emerald-400 font-mono">PippayLearning &lt;onboarding@resend.dev&gt;</code> kecuali jika Anda sudah memverifikasi domain pribadi di dashboard Resend.
               </p>
             </div>
 

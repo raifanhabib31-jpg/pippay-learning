@@ -12,6 +12,25 @@ export interface SendEmailResult {
   };
 }
 
+function formatResendSender(sender?: string): string {
+  if (!sender || !sender.trim()) {
+    return 'PippayLearning <onboarding@resend.dev>';
+  }
+  const clean = sender.trim();
+  if (
+    clean.includes('@gmail.com') ||
+    clean.includes('@yahoo.com') ||
+    clean.includes('@outlook.com') ||
+    clean.includes('@hotmail.com')
+  ) {
+    return 'PippayLearning <onboarding@resend.dev>';
+  }
+  if (!clean.includes('<') && clean.includes('@')) {
+    return `PippayLearning <${clean}>`;
+  }
+  return clean;
+}
+
 async function sendViaResendEndpoint(
   apiKey: string,
   from: string,
@@ -20,12 +39,14 @@ async function sendViaResendEndpoint(
   html: string,
   text: string
 ): Promise<{ success: boolean; message: string }> {
+  const safeSender = formatResendSender(from);
+
   // Try Netlify serverless proxy first (bypasses CORS restrictions)
   try {
     const netlifyRes = await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey, from, to, subject, html, text })
+      body: JSON.stringify({ apiKey, from: safeSender, to, subject, html, text })
     });
 
     if (netlifyRes.ok) {
