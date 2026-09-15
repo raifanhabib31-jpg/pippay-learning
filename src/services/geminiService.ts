@@ -72,7 +72,8 @@ export const geminiService = {
     rawContent: string,
     summaryType: SummaryType,
     courseName?: string,
-    fileName?: string
+    fileName?: string,
+    additionalPrompt?: string
   ): Promise<string> {
     const styleInstructions: Record<SummaryType, string> = {
       lengkap: `Buat ringkasan akademik yang komprehensif, terstruktur, mendalam, dan mudah dipelajari. Gunakan heading bertingkat, penjelas konsep, analogi sederhana jika perlu, tabel perbandingan jika relevan, dan daftar kesimpulan.`,
@@ -88,7 +89,10 @@ Mode Ringkasan: ${summaryType.toUpperCase()}
 
 Instruksi Gaya:
 ${styleInstructions[summaryType]}
-
+${additionalPrompt ? `
+Instruksi Tambahan dari Pengguna (PRIORITASKAN):
+${additionalPrompt}
+` : ''}
 Teks Dokumen Asli:
 """
 ${rawContent.slice(0, 30000)}
@@ -314,14 +318,18 @@ Wajib mencapai IPS $\\ge 3.70$ pada semester depan untuk mengompensasi dan menai
   async extractChaptersFromContent(
     content: string,
     title: string,
-    courseName?: string
+    courseName?: string,
+    additionalPrompt?: string
   ): Promise<Chapter[]> {
     const prompt = `Anda adalah Kurator Kurikulum & Spesialis Pembuat Materi Perkuliahan Akademik.
 Tugas Anda adalah memecah dokumen materi kuliah berikut menjadi 4 sampai 8 Bab / Sub-Bab terstruktur yang runtut dan mendalam.
 
 Mata Kuliah: ${courseName || 'Akademik'}
 Judul Materi: ${title}
-
+${additionalPrompt ? `
+Instruksi Tambahan dari Pengguna (PRIORITASKAN saat menyusun isi setiap bab):
+${additionalPrompt}
+` : ''}
 Isi Konten Dokumen:
 """
 ${content.slice(0, 18000)}

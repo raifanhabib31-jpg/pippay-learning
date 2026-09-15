@@ -79,6 +79,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
   const [rawTextInput, setRawTextInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [summaryMode, setSummaryMode] = useState<SummaryType>('lengkap');
+  const [additionalPrompt, setAdditionalPrompt] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [copied, setCopied] = useState(false);
@@ -166,14 +167,16 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
         contentToSummarize,
         summaryMode,
         targetCourse,
-        title
+        title,
+        additionalPrompt.trim() || undefined
       );
 
       setStatusMessage('Menyusun Bab & Sub-Bab terstruktur...');
       const chaptersResult = await geminiService.extractChaptersFromContent(
         contentToSummarize,
         title,
-        targetCourse
+        targetCourse,
+        additionalPrompt.trim() || undefined
       );
 
       const description = summaryResult.split('\n\n')[0]?.replace(/[#*_`]/g, '').trim() || 
@@ -1227,6 +1230,20 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   />
                 </div>
               )}
+
+              {/* Additional Prompt */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Instruksi Tambahan untuk AI <span className="text-slate-500 font-normal">(Opsional)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={additionalPrompt}
+                  onChange={(e) => setAdditionalPrompt(e.target.value)}
+                  placeholder="Contoh: Fokus ke rumus dan teorema saja. Tambahkan contoh soal di tiap bab. Gunakan bahasa yang lebih sederhana..."
+                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500 leading-relaxed resize-none"
+                />
+              </div>
 
               {/* Status or loader */}
               {isSummarizing && (
