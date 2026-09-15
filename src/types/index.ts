@@ -10,16 +10,29 @@ export interface Folder {
 
 export type SummaryType = 'lengkap' | 'poin_kunci' | 'rumus_definisi' | 'cheatsheet';
 
+export interface Chapter {
+  id: string;
+  number: number;
+  title: string;
+  content: string;
+  summary?: string;
+  keyPoints?: string[];
+  durationMinutes?: number;
+  isCompleted?: boolean;
+}
+
 export interface Materi {
   id: string;
   folderId: string;
   title: string;
+  description?: string;
   fileType: 'pdf' | 'pptx' | 'docx' | 'txt' | 'text';
   originalFileName?: string;
   fileSize?: string;
   rawContent: string;
   summary: string;
   summaryType: SummaryType;
+  chapters?: Chapter[];
   tags?: string[];
   createdAt: string;
   updatedAt: string;

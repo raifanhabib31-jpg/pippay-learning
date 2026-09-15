@@ -1,4 +1,4 @@
-import type { SummaryType, Soal, QuestionType } from '../types';
+import type { SummaryType, Soal, QuestionType, Chapter } from '../types';
 import { storageService } from './storageService';
 
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -306,8 +306,165 @@ IPS Anda berada pada angka **${ips.toFixed(2)}**, yang mengindikasikan adanya be
 **3. Target Semester Berikutnya:**
 Wajib mencapai IPS $\\ge 3.70$ pada semester depan untuk mengompensasi dan menaikkan kembali IPK kumulatif Anda ke jalur predikat *Cumlaude*!`;
     }
+  },
+
+  /**
+   * Mengekstrak dan menyusun materi menjadi Bab / Sub-Bab terstruktur dengan AI
+   */
+  async extractChaptersFromContent(
+    content: string,
+    title: string,
+    courseName?: string
+  ): Promise<Chapter[]> {
+    const prompt = `Anda adalah Kurator Kurikulum & Spesialis Pembuat Materi Perkuliahan Akademik.
+Tugas Anda adalah memecah dokumen materi kuliah berikut menjadi 4 sampai 8 Bab / Sub-Bab terstruktur yang runtut dan mendalam.
+
+Mata Kuliah: ${courseName || 'Akademik'}
+Judul Materi: ${title}
+
+Isi Konten Dokumen:
+"""
+${content.slice(0, 18000)}
+"""
+
+PETUNJUK FORMAT OUTPUT:
+Keluarkan HANYA JSON array valid (tanpa markdown wrapper jika memungkinkan) berisi daftar bab dengan struktur berikut:
+[
+  {
+    "id": "c_1",
+    "number": 1,
+    "title": "Nama Sub-Bab yang Jelas & Spesifik",
+    "summary": "Ringkasan 1-2 kalimat tentang apa yang dipelajari pada sub-bab ini.",
+    "content": "Penjelasan materi mendalam untuk sub-bab ini dalam format Markdown (gunakan bullet points, bold konsep penting, analogi, dan contoh kasus). Minimal 2-3 paragraf komprehensif.",
+    "keyPoints": [
+      "Poin kunci 1",
+      "Poin kunci 2",
+      "Poin kunci 3"
+    ],
+    "durationMinutes": 5,
+    "isCompleted": false
+  }
+]
+
+Pastikan bab berurutan dari pengantar konsep, teori inti, studi kasus/rumus, hingga implementasi/analisis.`;
+
+    try {
+      const response = await callGemini(prompt, 'Anda adalah Curriculum Designer dan Academic Content Specialist.');
+      let cleanedJson = response.trim();
+      if (cleanedJson.startsWith('```json')) {
+        cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedJson.startsWith('```')) {
+        cleanedJson = cleanedJson.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      const parsed: any[] = JSON.parse(cleanedJson);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((item, idx) => ({
+          id: item.id || `c_${Date.now()}_${idx + 1}`,
+          number: idx + 1,
+          title: item.title || `Bab ${idx + 1}: ${title}`,
+          summary: item.summary || 'Ringkasan sub-bab.',
+          content: item.content || item.summary || 'Konten sub-bab materi perkuliahan.',
+          keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : ['Pahami konsep utama sub-bab ini.'],
+          durationMinutes: typeof item.durationMinutes === 'number' ? item.durationMinutes : 5,
+          isCompleted: idx === 0, // Bab 1 default completed/read
+        }));
+      }
+      throw new Error('Hasil ekstraksi bukan array bab.');
+    } catch (e) {
+      console.warn('Fallback ekstraksi bab lokal:', e);
+      return parseChaptersFallback(content, title);
+    }
   }
 };
+
+/**
+ * Smart Fallback parser for chapters from Markdown text headers
+ */
+function parseChaptersFallback(content: string, title: string): Chapter[] {
+  const lines = content.split('\n');
+  const sections: { title: string; lines: string[] }[] = [];
+  let currentTitle = `Pengenalan ${title}`;
+  let currentLines: string[] = [];
+
+  for (const line of lines) {
+    const headerMatch = line.match(/^#{1,3}\s+(.+)$/) || line.match(/^(\d+[\.\)]\s+.+)$/);
+    if (headerMatch && currentLines.length > 2) {
+      sections.push({ title: currentTitle, lines: currentLines });
+      currentTitle = headerMatch[1].replace(/^[#\*\d\.\)\s]+/, '').trim();
+      currentLines = [];
+    } else {
+      currentLines.push(line);
+    }
+  }
+  if (currentLines.length > 0) {
+    sections.push({ title: currentTitle, lines: currentLines });
+  }
+
+  if (sections.length < 2) {
+    // Default 4-chapter breakdown if headings not detected
+    return [
+      {
+        id: 'c-1',
+        number: 1,
+        title: `Pengenalan & Konsep Dasar ${title}`,
+        summary: `Pemahaman fondasi utama dan terminologi kunci terkait ${title}.`,
+        content: `### 1. Pengantar dan Definisi\nSub-bab ini mencakup konsep fundamental, latar belakang, dan urgensi topik dalam perkuliahan.\n\n${content.slice(0, 1000)}`,
+        keyPoints: ['Definisi dan terminologi utama', 'Tujuan dan peran dalam sistem komputasi', 'Hubungan dengan materi pendukung'],
+        durationMinutes: 4,
+        isCompleted: true,
+      },
+      {
+        id: 'c-2',
+        number: 2,
+        title: `Struktur, Aturan & Karakteristik Inti`,
+        summary: `Menganalisis arsitektur, properti teknis, dan relasi antar komponen.`,
+        content: `### 2. Properti dan Mekanisme Teknis\nBagian ini menguraikan arsitektur teknis dan batasan operasional yang harus diperhatikan.\n\n- Komponen penyusun dan keterkaitannya\n- Aturan integritas dan batasan sistem\n- Alur eksekusi logika`,
+        keyPoints: ['Karakteristik teknis sistem', 'Aturan integritas data', 'Kelebihan dan kelemahan spesifik'],
+        durationMinutes: 6,
+        isCompleted: false,
+      },
+      {
+        id: 'c-3',
+        number: 3,
+        title: `Operasi, Algoritma & Kasus Praktis`,
+        summary: `Langkah-langkah eksekusi, metode manipulasi, dan kalkulasi efisiensi.`,
+        content: `### 3. Implementasi dan Prosedur Kerja\nPenjelasan langkah demi langkah metode pengerjaan kasus nyata beserta tips tracing manual.`,
+        keyPoints: ['Algoritma proses tahap demi tahap', 'Analisis kompleksitas efisiensi', 'Penyelesaian studi kasus'],
+        durationMinutes: 7,
+        isCompleted: false,
+      },
+      {
+        id: 'c-4',
+        number: 4,
+        title: `Optimasi, Best Practices & Tips Ujian`,
+        summary: `Pola pencegahan error, best practices industri, dan prediksi soal dosen.`,
+        content: `### 4. Rangkuman & Poin Penting Ujian\nFokuskan perhatian pada pola-pola variasi soal ujian dan konsep yang sering menjadi jebakan nilai.`,
+        keyPoints: ['Best practices implementasi', 'Pola soal yang sering muncul di ujian', 'Rangkuman formula/aturan cepat'],
+        durationMinutes: 5,
+        isCompleted: false,
+      }
+    ];
+  }
+
+  return sections.slice(0, 8).map((sec, idx) => {
+    const text = sec.lines.join('\n').trim();
+    return {
+      id: `c-${idx + 1}`,
+      number: idx + 1,
+      title: sec.title.length > 50 ? sec.title.slice(0, 50) + '...' : sec.title,
+      summary: text.slice(0, 120).replace(/[#*_`]/g, '') + '...',
+      content: text || `Penjelasan materi untuk ${sec.title}.`,
+      keyPoints: [
+        `Memahami esensi ${sec.title}`,
+        'Menganalisis perbedaan dengan konsep sebelumnya',
+        'Menguasai implementasi dalam soal perkuliahan'
+      ],
+      durationMinutes: Math.max(3, Math.min(10, Math.ceil(text.length / 400))),
+      isCompleted: idx === 0,
+    };
+  });
+}
 
 /**
  * Intelligent fallback generator if API key is not configured or in case of parsing errors
