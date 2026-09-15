@@ -250,28 +250,40 @@ export function App() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         {/* Top Header */}
-        <header className="bg-dark-900/90 backdrop-blur-md border-b border-dark-border px-6 md:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-400">
-              PippayLearning
-            </span>
-            <span className="text-slate-600">/</span>
-            <span className="text-xs font-bold text-white">
-              {tabLabels[activeTab]}
-            </span>
+        <header className="bg-white/90 dark:bg-dark-900/90 backdrop-blur-md border-b border-slate-200 dark:border-dark-border px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-2.5">
+            <div className="md:hidden w-8 h-8 rounded-xl bg-purple-50 dark:bg-dark-800 border border-purple-300 dark:border-purple-500/40 p-0.5 flex items-center justify-center shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                Pippay
+              </span>
+              <span className="text-slate-400 dark:text-slate-600">/</span>
+              <span className="text-xs font-bold text-slate-800 dark:text-white">
+                {tabLabels[activeTab]}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-white flex items-center justify-end gap-1.5">
+              <div className="text-xs font-bold text-slate-800 dark:text-white flex items-center justify-end gap-1.5">
                 <span>{settings.userName || 'Alex Pratama'}</span>
                 <span className="text-[10px] font-bold px-1.5 py-0.2 bg-accent-orange/20 text-accent-orange rounded border border-accent-orange/30">
-                  {settings.userTitle || 'Mahasiswa Berprestasi'}
+                  {settings.userTitle || 'Mahasiswa'}
                 </span>
               </div>
-              <div className="text-[11px] text-purple-300">{settings.userUniversity || settings.userEmail || 'Mode Lokal'}</div>
+              <div className="text-[11px] text-purple-600 dark:text-purple-300">{settings.userUniversity || settings.userEmail || 'Mode Lokal'}</div>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-dark-800 border border-purple-500/40 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-dark-800 border border-purple-300 dark:border-purple-500/40 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
               <img 
                 src="/logo.png" 
                 alt="Avatar" 
@@ -285,7 +297,7 @@ export function App() {
         </header>
 
         {/* Tab Body */}
-        <div className="p-6 md:p-8 flex-1">
+        <div className="p-4 sm:p-6 md:p-8 pb-24 md:pb-8 flex-1">
           {activeTab === 'dashboard' && (
             <Dashboard
               folders={folders}
