@@ -65,15 +65,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [activeAgendaFilter, setActiveAgendaFilter] = useState<'all' | 'ujian' | 'lomba' | 'organisasi'>('all');
   const [isAcademicModalOpen, setIsAcademicModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSemesterFilter, setSelectedSemesterFilter] = useState<string>('all');
   const [targetIpkScore, setTargetIpkScore] = useState<number>(3.85);
 
-  // Smart toggle states (interactive UI toggles like reference)
+  // Smart toggle states
   const [toggleStates, setToggleStates] = useState({
-    materi: true,
-    quiz: true,
-    ujian: true,
-    reminder: true,
     dial: true,
     deviceMateri: true,
     deviceQuiz: true,
@@ -275,40 +270,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          {/* Section: "Ruang Belajar [Name]" & 4 Interactive Switch Cards */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                  <span>Ruang Belajar {settings.userName ? settings.userName.split(' ')[0] : 'Scarlett'}</span>
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Pusat kendali modul, kuis instan, & target semester.</p>
-              </div>
 
-              {/* Status pills & Semester filter dropdown */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                  <span>💧 {totalSksCompleted} SKS</span>
-                  <span className="text-slate-300 dark:text-slate-600">•</span>
-                  <span>⚡ IPK {currentIpk}</span>
-                </div>
-
-                <div className="relative">
-                  <select
-                    value={selectedSemesterFilter}
-                    onChange={(e) => setSelectedSemesterFilter(e.target.value)}
-                    aria-label="Filter Semester"
-                    className="appearance-none bg-slate-100 dark:bg-dark-800 hover:bg-slate-200/80 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-dark-border rounded-xl pl-3 pr-7 py-1 text-xs font-semibold focus:outline-hidden cursor-pointer transition-colors"
-                  >
-                    <option value="all">Semua Semester</option>
-                    <option value="active">Semester Aktif</option>
-                    <option value="target">Target Cumlaude (&ge;3.50)</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-          </div>
 
 
 
