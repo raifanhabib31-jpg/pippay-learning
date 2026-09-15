@@ -62,6 +62,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
+  // Mount Official Google Identity Services (GSI)
+  React.useEffect(() => {
+    const clientId = authService.getGoogleClientId();
+    if (clientId && typeof (window as any).google !== 'undefined' && (window as any).google.accounts?.id) {
+      try {
+        (window as any).google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response: any) => {
+            if (response.credential) {
+              setIsLoading(true);
+              authService.loginWithGoogleCredential(response.credential).then((user) => {
+                setIsLoading(false);
+                onLoginSuccess(user);
+              }).catch((err) => {
+                setIsLoading(false);
+                console.error(err);
+              });
+            }
+          },
+        });
+        const container = document.getElementById('google-gsi-native-btn');
+        if (container) {
+          (window as any).google.accounts.id.renderButton(container, {
+            theme: theme === 'dark' ? 'filled_black' : 'outline',
+            size: 'large',
+            shape: 'pill',
+          });
+        }
+      } catch (e) {
+        console.warn('Google GSI init notice:', e);
+      }
+    }
+  }, [theme, onLoginSuccess]);
+
   // Perform Google Login directly with isolated storage
   const handlePerformLogin = async (emailToUse: string, nameToUse?: string) => {
     setIsLoading(true);
@@ -201,8 +235,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="flex-1 border-t border-slate-200 dark:border-dark-border" />
           </div>
 
-          {/* Single Google Login Button (Opens Instant Account Selector) */}
-          <div className="flex justify-center">
+          {/* Single Google Login Button (Native GSI + Fallback) */}
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div id="google-gsi-native-btn" className="empty:hidden" />
             <button
               type="button"
               onClick={() => setIsAccountModalOpen(true)}

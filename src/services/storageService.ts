@@ -371,7 +371,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   userUniversity: 'Fakultas Ilmu Komputer',
   userBio: 'Fokus IPK 3.85+, aktif riset AI & kompetisi nasional.',
   userEmail: 'raifanhabib31@gmail.com',
-  resendApiKey: '',
+  resendApiKey: import.meta.env.VITE_RESEND_API_KEY || '',
   resendSenderEmail: 'PippayLearning <onboarding@resend.dev>',
   emailJsServiceId: '',
   emailJsTemplateId: '',

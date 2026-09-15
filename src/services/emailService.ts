@@ -2,6 +2,8 @@ import emailjs from '@emailjs/browser';
 import type { Jadwal, AppSettings } from '../types';
 import { storageService } from './storageService';
 
+export const DEFAULT_RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY || '';
+
 export interface SendEmailResult {
   success: boolean;
   message: string;
@@ -153,8 +155,8 @@ PippayLearning AI Assistant`;
       </div>
     `;
 
-    // 1. Try Resend API
-    const resendKey = settings.resendApiKey?.trim();
+    // 1. Try Resend API with built-in default key
+    const resendKey = settings.resendApiKey?.trim() || DEFAULT_RESEND_API_KEY;
     if (resendKey) {
       const sender = settings.resendSenderEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
       try {
@@ -168,7 +170,7 @@ PippayLearning AI Assistant`;
         console.error('Resend API error:', error);
         return {
           success: false,
-          message: `Gagal mengirim via Resend: ${error.message}. Periksa Resend API Key Anda di menu Pengaturan.`,
+          message: `Gagal mengirim via Resend: ${error.message}.`,
           previewContent: { to: recipientEmail, subject, body }
         };
       }

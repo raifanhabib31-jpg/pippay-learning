@@ -493,8 +493,13 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                 <Mail className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-base text-slate-900 dark:text-white">Resend Email API (Pengiriman Otomatis)</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Kirim notifikasi jadwal kuliah & deadline langsung ke inbox email Anda</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Resend Email API (Pengiriman Otomatis)</h3>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800/40">
+                    Aktif Bawaan Sistem
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Pengiriman email pengingat jadwal kuliah & H-1 sudah aktif otomatis tanpa perlu konfigurasi</p>
               </div>
             </div>
             <a
@@ -503,7 +508,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
               rel="noopener noreferrer"
               className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold self-start sm:self-auto"
             >
-              <span>Dapatkan Resend Key</span>
+              <span>Dashboard Resend</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>

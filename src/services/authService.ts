@@ -232,6 +232,29 @@ export const authService = {
   },
 
   /**
+   * Login dengan token credential resmi Google (JWT)
+   */
+  async loginWithGoogleCredential(credentialToken: string): Promise<UserProfile> {
+    const payload = decodeJwtResponse(credentialToken);
+    if (!payload || !payload.email) {
+      throw new Error('Token Google tidak valid.');
+    }
+
+    const user: UserProfile = {
+      id: `google_${payload.sub || payload.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      name: payload.name || payload.email.split('@')[0],
+      email: payload.email,
+      avatarUrl: payload.picture || `https://api.dicebear.com/7.x/notionists/svg?seed=${payload.email}`,
+      university: 'Fakultas Ilmu Komputer',
+      provider: 'google',
+      createdAt: new Date().toISOString(),
+    };
+
+    this.setCurrentUser(user);
+    return user;
+  },
+
+  /**
    * Login cepat langsung dengan Email Google
    */
   async loginWithGoogleDirect(email: string, name?: string, avatarUrl?: string): Promise<UserProfile> {
