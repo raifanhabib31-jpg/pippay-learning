@@ -356,11 +356,13 @@ const DEFAULT_DAILY_GRADES: DailyGradeItem[] = [
 const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: '',
   geminiModel: 'gemini-1.5-flash',
-  userName: 'Alex Pratama',
+  userName: 'Raifan Habib',
   userTitle: 'Mahasiswa Berprestasi',
   userUniversity: 'Fakultas Ilmu Komputer',
-  userBio: 'Target IPK 3.85+, aktif riset AI & juara kompetisi nasional.',
-  userEmail: '',
+  userBio: 'Fokus IPK 3.85+, aktif riset AI & kompetisi nasional.',
+  userEmail: 'raifanhabib31@gmail.com',
+  resendApiKey: '',
+  resendSenderEmail: 'PippayLearning <onboarding@resend.dev>',
   emailJsServiceId: '',
   emailJsTemplateId: '',
   emailJsPublicKey: '',
@@ -456,7 +458,17 @@ export const storageService = {
       this.saveSettings(DEFAULT_SETTINGS);
       return DEFAULT_SETTINGS;
     }
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+    const parsed = JSON.parse(data);
+    if (!parsed.resendApiKey) {
+      parsed.resendApiKey = DEFAULT_SETTINGS.resendApiKey;
+    }
+    if (!parsed.resendSenderEmail) {
+      parsed.resendSenderEmail = DEFAULT_SETTINGS.resendSenderEmail;
+    }
+    if (!parsed.userEmail) {
+      parsed.userEmail = DEFAULT_SETTINGS.userEmail;
+    }
+    return { ...DEFAULT_SETTINGS, ...parsed };
   },
 
   saveSettings(settings: AppSettings) {
