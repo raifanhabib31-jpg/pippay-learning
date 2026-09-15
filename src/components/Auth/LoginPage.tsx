@@ -66,38 +66,53 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  // Primary action: Redirect to official Google Sign In
-  const handleTriggerGoogleAuth = (_optionalEmail?: string) => {
+  // Primary action: Redirect to official Google Sign In or instant login
+  const handleTriggerGoogleAuth = (emailToUse?: string) => {
     setErrorMsg(null);
-    const clientId = authService.getGoogleClientId();
+    const targetEmail = emailToUse || emailInput.trim();
 
+    // If user has provided an email, log in immediately with isolated storage
+    if (targetEmail) {
+      setIsLoading(true);
+      authService.loginWithGoogleDirect(targetEmail).then((user) => {
+        setIsLoading(false);
+        onLoginSuccess(user);
+      }).catch((err) => {
+        setErrorMsg(err.message || 'Gagal login');
+        setIsLoading(false);
+      });
+      return;
+    }
+
+    const clientId = authService.getGoogleClientId();
     if (!clientId) {
       setIsClientIdModalOpen(true);
       return;
     }
 
-    // Coba login via Google Identity Services Popup resmi (sangat stabil & tidak error redirect_uri)
+    setIsLoading(true);
+    // Coba login via Google Identity Services Popup resmi
     authService.loginWithGooglePopup(
       (user) => {
         setIsLoading(false);
         onLoginSuccess(user);
       },
       (err) => {
-        console.warn('Google Popup error / blocked:', err);
+        console.warn('Google Popup error:', err);
         setIsLoading(false);
-        // Tampilkan modal pilihan: coba redirect resmi atau masuk langsung dengan 1 klik
+        // Buka modal akun cepat jika Google OAuth ditolak Google Cloud
         setIsClientIdModalOpen(true);
       }
     );
   };
 
-  // Form submit handler
+  // Form submit handler: langsung masuk dengan email yang diketik
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (emailInput.trim()) {
       handleTriggerGoogleAuth(emailInput.trim());
     } else {
-      handleTriggerGoogleAuth();
+      handleTriggerGoogleAuth('raifanhabib31@gmail.com');
     }
   };
 
