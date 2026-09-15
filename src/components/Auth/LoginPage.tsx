@@ -67,17 +67,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   // Primary action: Redirect to official Google Sign In
-  const handleTriggerGoogleAuth = (optionalEmail?: string) => {
+  const handleTriggerGoogleAuth = (_optionalEmail?: string) => {
     setErrorMsg(null);
-    const targetEmail = optionalEmail || emailInput;
     const clientId = authService.getGoogleClientId();
 
     if (!clientId) {
       setIsClientIdModalOpen(true);
       return;
     }
-
-    setIsLoading(true);
 
     // Coba login via Google Identity Services Popup resmi (sangat stabil & tidak error redirect_uri)
     authService.loginWithGooglePopup(
@@ -86,13 +83,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         onLoginSuccess(user);
       },
       (err) => {
-        console.warn('Google Popup fallback to redirect:', err);
-        // Jika popup diblokir / gagal, redirect langsung ke Google OAuth
-        const redirected = authService.redirectToGoogleOAuth(targetEmail);
-        if (!redirected) {
-          setIsLoading(false);
-          setIsClientIdModalOpen(true);
-        }
+        console.warn('Google Popup error / blocked:', err);
+        setIsLoading(false);
+        // Tampilkan modal pilihan: coba redirect resmi atau masuk langsung dengan 1 klik
+        setIsClientIdModalOpen(true);
       }
     );
   };
