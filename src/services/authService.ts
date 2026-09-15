@@ -3,6 +3,7 @@ import type { UserProfile } from '../types';
 const STORAGE_KEYS = {
   ACTIVE_USER: 'pippay_active_user',
   ALL_USERS: 'pippay_registered_users',
+  GOOGLE_CLIENT_ID: 'pippay_google_client_id',
 };
 
 // Helper: Decode Google JWT Token (Credential response from Google Identity Services)
@@ -24,6 +25,114 @@ function decodeJwtResponse(token: string): any {
 }
 
 export const authService = {
+  /**
+   * Dapatkan Google OAuth Client ID dari localStorage atau Vite env
+   */
+  getGoogleClientId(): string {
+    return (
+      localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID) ||
+      (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) ||
+      ''
+    );
+  },
+
+  /**
+   * Simpan Google OAuth Client ID
+   */
+  setGoogleClientId(clientId: string) {
+    localStorage.setItem(STORAGE_KEYS.GOOGLE_CLIENT_ID, clientId.trim());
+  },
+
+  /**
+   * Redirect pengguna langsung ke laman resmi Google Sign-In (OAuth 2.0)
+   */
+  redirectToGoogleOAuth(loginHint?: string): boolean {
+    const clientId = this.getGoogleClientId();
+    if (!clientId) {
+      return false; // Memerlukan Client ID
+    }
+
+    const redirectUri = window.location.origin + window.location.pathname;
+    const scope = encodeURIComponent('openid email profile');
+    const responseType = encodeURIComponent('id_token token');
+    const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    
+    let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+      clientId
+    )}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=${responseType}&scope=${scope}&nonce=${nonce}&prompt=select_account`;
+
+    if (loginHint && loginHint.includes('@')) {
+      authUrl += `&login_hint=${encodeURIComponent(loginHint.trim())}`;
+    }
+
+    window.location.href = authUrl;
+    return true;
+  },
+
+  /**
+   * Cek dan tangani callback redirect dari Google OAuth (URL Hash #id_token=... atau #access_token=...)
+   */
+  async handleOAuthCallback(): Promise<UserProfile | null> {
+    const hash = window.location.hash;
+    if (!hash || !hash.includes('id_token=') && !hash.includes('access_token=')) {
+      return null;
+    }
+
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const idToken = params.get('id_token');
+    const accessToken = params.get('access_token');
+
+    // 1. Prioritas id_token JWT
+    if (idToken) {
+      const payload = decodeJwtResponse(idToken);
+      if (payload && payload.email) {
+        const user: UserProfile = {
+          id: `google_${payload.sub || payload.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          name: payload.name || payload.email.split('@')[0],
+          email: payload.email,
+          avatarUrl: payload.picture || `https://api.dicebear.com/7.x/notionists/svg?seed=${payload.email}`,
+          university: 'Fakultas Ilmu Komputer',
+          provider: 'google',
+          createdAt: new Date().toISOString(),
+        };
+        this.setCurrentUser(user);
+        // Bersihkan hash dari URL agar rapi
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        return user;
+      }
+    }
+
+    // 2. Fallback fetch userinfo via access_token
+    if (accessToken) {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.ok) {
+          const info = await res.json();
+          const user: UserProfile = {
+            id: `google_${info.sub || info.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            name: info.name || info.email.split('@')[0],
+            email: info.email,
+            avatarUrl: info.picture || `https://api.dicebear.com/7.x/notionists/svg?seed=${info.email}`,
+            university: 'Fakultas Ilmu Komputer',
+            provider: 'google',
+            createdAt: new Date().toISOString(),
+          };
+          this.setCurrentUser(user);
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          return user;
+        }
+      } catch (err) {
+        console.error('Failed to fetch user profile from Google access token:', err);
+      }
+    }
+
+    return null;
+  },
+
   /**
    * Dapatkan user yang sedang aktif / login saat ini
    */
@@ -68,66 +177,26 @@ export const authService = {
   },
 
   /**
-   * Login dengan Google (Credential JWT dari Google Identity Services atau Mock)
-   */
-  async loginWithGoogleCredential(credentialToken: string): Promise<UserProfile> {
-    const payload = decodeJwtResponse(credentialToken);
-    if (!payload || !payload.email) {
-      throw new Error('Token Google tidak valid.');
-    }
-
-    const user: UserProfile = {
-      id: `google_${payload.sub || payload.email}`,
-      name: payload.name || payload.email.split('@')[0],
-      email: payload.email,
-      avatarUrl: payload.picture,
-      university: 'Universitas Indonesia',
-      provider: 'google',
-      createdAt: new Date().toISOString(),
-    };
-
-    this.setCurrentUser(user);
-    return user;
-  },
-
-  /**
-   * Login cepat simulasi Google (jika tanpa Client ID atau via modal interaktif)
+   * Login cepat langsung dengan Email Google
    */
   async loginWithGoogleDirect(email: string, name?: string, avatarUrl?: string): Promise<UserProfile> {
     const cleanEmail = email.trim().toLowerCase();
-    const displayName = name?.trim() || cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const displayName =
+      name?.trim() ||
+      cleanEmail
+        .split('@')[0]
+        .replace(/[._]/g, ' ')
+        .replace(/\b\w/g, (l) => l.toUpperCase());
 
     const user: UserProfile = {
       id: `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
       name: displayName,
       email: cleanEmail,
-      avatarUrl: avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${cleanEmail}&backgroundColor=ffdfbf,ffd5dc,d1d4f9,c0aede,b6e3f4`,
+      avatarUrl:
+        avatarUrl ||
+        `https://api.dicebear.com/7.x/notionists/svg?seed=${cleanEmail}&backgroundColor=ffdfbf,ffd5dc,d1d4f9,c0aede,b6e3f4`,
       university: 'Fakultas Ilmu Komputer',
       provider: 'google',
-      createdAt: new Date().toISOString(),
-    };
-
-    this.setCurrentUser(user);
-    return user;
-  },
-
-  /**
-   * Login manual dengan Email & Nama Mahasiswa
-   */
-  async loginWithEmail(name: string, email: string, university?: string, major?: string): Promise<UserProfile> {
-    if (!email.trim() || !name.trim()) {
-      throw new Error('Nama dan Email wajib diisi.');
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const user: UserProfile = {
-      id: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      name: name.trim(),
-      email: cleanEmail,
-      avatarUrl: `https://api.dicebear.com/7.x/notionists/svg?seed=${cleanEmail}&backgroundColor=ffdfbf,ffd5dc,d1d4f9,c0aede,b6e3f4`,
-      university: university?.trim() || 'Universitas Indonesia',
-      major: major?.trim() || 'Ilmu Komputer',
-      provider: 'email',
       createdAt: new Date().toISOString(),
     };
 

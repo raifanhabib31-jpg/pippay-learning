@@ -88,6 +88,16 @@ export function App() {
     setSettings(storageService.getSettings());
   };
 
+  // Check Google OAuth redirect callback on startup
+  useEffect(() => {
+    authService.handleOAuthCallback().then((user) => {
+      if (user) {
+        setCurrentUser(user);
+        setActiveTab('dashboard');
+      }
+    });
+  }, []);
+
   // Load data when user logs in
   useEffect(() => {
     if (currentUser) {
