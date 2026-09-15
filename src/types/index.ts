@@ -96,6 +96,7 @@ export interface Jadwal {
   locationOrLink?: string;
   notes?: string;
   reminderSent: boolean;
+  reminderSentH1?: boolean; // Penanda pengingat H-1 sudah terkirim otomatis
   userEmail?: string;
   isRecurring?: boolean; // Rutin berulang tiap minggu ke depan
   dayOfWeek?: string; // Hari rutin misal "Senin", "Selasa", dst
@@ -134,6 +135,7 @@ export interface AppSettings {
   userUniversity?: string; // contoh: "Universitas Indonesia"
   userBio?: string;
   userEmail: string;
+  autoH1Reminder?: boolean; // Otomatis kirim email H-1 sebelum agenda
   emailProvider?: 'resend' | 'emailjs' | 'simulation';
   resendApiKey?: string;
   resendSenderEmail?: string;

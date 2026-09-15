@@ -368,6 +368,18 @@ const DEFAULT_SETTINGS: AppSettings = {
   emailJsPublicKey: '',
 };
 
+// Fire-and-forget sync to Netlify Blobs (server-side storage for scheduled reminders)
+function syncToServer(jadwal: Jadwal[], settings: AppSettings) {
+  // Only sync when running in a real deployed environment (has /api/ route)
+  fetch('/api/sync-jadwal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jadwal, settings }),
+  }).catch(() => {
+    // Silent fail - local dev doesn't have this endpoint
+  });
+}
+
 export const storageService = {
   getFolders(): Folder[] {
     const data = localStorage.getItem(STORAGE_KEYS.FOLDERS);
@@ -424,6 +436,9 @@ export const storageService = {
 
   saveJadwal(jadwal: Jadwal[]) {
     localStorage.setItem(STORAGE_KEYS.JADWAL, JSON.stringify(jadwal));
+    // Sync to server so scheduled H-1 reminder can access latest data
+    const settings = this.getSettings();
+    syncToServer(jadwal, settings);
   },
 
   getSemesters(): SemesterRecord[] {
@@ -473,6 +488,9 @@ export const storageService = {
 
   saveSettings(settings: AppSettings) {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    // Sync to server so scheduled reminder has latest API key + email
+    const jadwal = this.getJadwal();
+    syncToServer(jadwal, settings);
   },
 
   exportAllData(): string {

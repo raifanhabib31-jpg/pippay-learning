@@ -84,6 +84,21 @@ export function App() {
     loadData();
   }, []);
 
+  // Auto H-1 reminder: runs once when jadwalList is first loaded
+  const [h1CheckDone, setH1CheckDone] = useState(false);
+  useEffect(() => {
+    if (jadwalList.length === 0 || h1CheckDone) return;
+    setH1CheckDone(true);
+    emailService.checkAndSendH1AutoReminders(jadwalList).then(({ updatedJadwal, sentCount }) => {
+      if (sentCount > 0) {
+        setJadwalList(updatedJadwal);
+        console.log(`[PippayLearning] ${sentCount} pengingat H-1 otomatis berhasil dikirim.`);
+      }
+    }).catch((err) => {
+      console.warn('[PippayLearning] Gagal mengirim pengingat H-1 otomatis:', err);
+    });
+  }, [jadwalList, h1CheckDone]);
+
   // Handlers for Folder & Materi
   const handleSaveFolder = (newFolder: Folder) => {
     const updated = [...folders, newFolder];

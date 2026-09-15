@@ -247,5 +247,45 @@ PippayLearning AI Assistant`;
         message: `Gagal mengirim email tes: ${e.message}`
       };
     }
+  },
+
+  /**
+   * Memeriksa seluruh agenda dan mengirim email pengingat otomatis H-1 (besok)
+   */
+  async checkAndSendH1AutoReminders(jadwalList: Jadwal[]): Promise<{ updatedJadwal: Jadwal[]; sentCount: number }> {
+    const settings = storageService.getSettings();
+    if (settings.autoH1Reminder === false) {
+      return { updatedJadwal: jadwalList, sentCount: 0 };
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const tomorrowDayName = dayNames[tomorrow.getDay()];
+
+    let sentCount = 0;
+    const updated = await Promise.all(
+      jadwalList.map(async (item) => {
+        const isTomorrow = item.date === tomorrowStr || (item.isRecurring && item.dayOfWeek === tomorrowDayName);
+        
+        // If it's tomorrow and H-1 reminder has NOT been sent yet
+        if (isTomorrow && !item.reminderSentH1) {
+          console.log(`[PippayLearning] Mengirim pengingat H-1 otomatis untuk agenda: ${item.title}`);
+          const res = await this.sendJadwalReminder(item);
+          if (res.success) {
+            sentCount++;
+            return { ...item, reminderSentH1: true };
+          }
+        }
+        return item;
+      })
+    );
+
+    if (sentCount > 0) {
+      storageService.saveJadwal(updated);
+    }
+
+    return { updatedJadwal: updated, sentCount };
   }
 };
