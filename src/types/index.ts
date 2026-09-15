@@ -34,6 +34,7 @@ export interface Materi {
   summaryType: SummaryType;
   chapters?: Chapter[];
   tags?: string[];
+  images?: string[]; // base64 images extracted from uploaded document
   createdAt: string;
   updatedAt: string;
 }

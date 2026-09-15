@@ -35,6 +35,115 @@ import type { Folder, Materi, SummaryType, Chapter } from '../../types';
 import { parseDocumentFile } from '../../services/fileParser';
 import { geminiService } from '../../services/geminiService';
 
+/* ─── ImageGallery: tampilan galeri gambar halaman dokumen ─── */
+const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  const openLightbox = (idx: number) => setLightboxIdx(idx);
+  const closeLightbox = () => setLightboxIdx(null);
+  const prev = () => setLightboxIdx((i) => (i !== null ? (i - 1 + images.length) % images.length : 0));
+  const next = () => setLightboxIdx((i) => (i !== null ? (i + 1) % images.length : 0));
+
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (lightboxIdx === null) return;
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'Escape') closeLightbox();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightboxIdx]);
+
+  return (
+    <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 md:p-8 space-y-5 shadow-sm">
+      <div className="flex items-center justify-between pb-4 border-b border-dark-border">
+        <div>
+          <h2 className="text-lg font-bold text-white">Galeri Gambar Dokumen</h2>
+          <p className="text-xs text-slate-400 mt-0.5">{images.length} halaman/slide dari "{title}" — klik gambar untuk perbesar</p>
+        </div>
+        <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full">
+          {images.length} Gambar
+        </span>
+      </div>
+
+      {/* Grid gambar */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {images.map((src, idx) => (
+          <button
+            key={idx}
+            onClick={() => openLightbox(idx)}
+            className="group relative rounded-xl overflow-hidden border border-dark-border hover:border-amber-500/60 transition-all bg-dark-800 aspect-[3/4] focus:outline-none focus:ring-2 focus:ring-amber-500"
+          >
+            <img
+              src={src}
+              alt={`Halaman ${idx + 1}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-lg">
+                🔍 Perbesar
+              </span>
+            </div>
+            <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold bg-black/70 text-slate-200 px-1.5 py-0.5 rounded-md">
+              {idx + 1}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Lightbox */}
+      {lightboxIdx !== null && (
+        <div
+          className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={closeLightbox}
+        >
+          {/* Prev */}
+          <button
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            className="absolute left-4 md:left-8 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          {/* Image */}
+          <div
+            className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={images[lightboxIdx]}
+              alt={`Halaman ${lightboxIdx + 1}`}
+              className="max-h-[82vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+            />
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-slate-300 font-semibold bg-white/10 px-3 py-1 rounded-full">
+                Halaman {lightboxIdx + 1} / {images.length}
+              </span>
+              <button
+                onClick={closeLightbox}
+                className="text-xs text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors"
+              >
+                ✕ Tutup
+              </button>
+            </div>
+          </div>
+
+          {/* Next */}
+          <button
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            className="absolute right-4 md:right-8 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 interface MateriManagerProps {
   folders: Folder[];
   materi: Materi[];
@@ -59,7 +168,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
   onStartQuizFromMateri,
 }) => {
   const [selectedMateri, setSelectedMateri] = useState<Materi | null>(null);
-  const [activeTab, setActiveTab] = useState<'bab' | 'dokumen' | 'mindmap'>('bab');
+  const [activeTab, setActiveTab] = useState<'bab' | 'dokumen' | 'mindmap' | 'gambar'>('bab');
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
   
   // Modals
@@ -141,14 +250,17 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
     setIsSummarizing(true);
 
+    let extractedImages: string[] = [];
+
     try {
       if (uploadType === 'file' && selectedFile) {
-        setStatusMessage('Mengekstrak teks dari file ' + selectedFile.name + '...');
+        setStatusMessage('Mengekstrak teks & gambar dari file ' + selectedFile.name + '...');
         const parsed = await parseDocumentFile(selectedFile);
         contentToSummarize = parsed.text;
         fileType = parsed.fileType;
         originalName = parsed.fileName;
         fileSize = parsed.fileSize;
+        extractedImages = parsed.images || [];
       } else {
         contentToSummarize = rawTextInput.trim();
         fileType = 'text';
@@ -194,6 +306,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
         summary: summaryResult,
         summaryType: summaryMode,
         chapters: chaptersResult,
+        images: extractedImages.length > 0 ? extractedImages : undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -207,6 +320,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       setDocTitle('');
       setRawTextInput('');
       setSelectedFile(null);
+      setAdditionalPrompt('');
     } catch (err: any) {
       alert('Gagal memproses dokumen: ' + (err.message || 'Error'));
     } finally {
@@ -479,6 +593,21 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 <span>Dokumen Lengkap</span>
               </button>
 
+              {/* Tab Gambar — hanya muncul jika materi punya images */}
+              {selectedMateri.images && selectedMateri.images.length > 0 && (
+                <button
+                  onClick={() => setActiveTab(activeTab === 'gambar' ? 'bab' : 'gambar')}
+                  className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all ${
+                    activeTab === 'gambar'
+                      ? 'bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-900/30'
+                      : 'bg-dark-800 hover:bg-dark-750 text-slate-200 border-dark-border hover:border-amber-500/50'
+                  }`}
+                >
+                  <BookMarked className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Gambar ({selectedMateri.images.length})</span>
+                </button>
+              )}
+
               <button
                 onClick={handleShare}
                 className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 hover:text-white rounded-full text-xs font-semibold border border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50"
@@ -688,6 +817,11 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* VIEW TAB 4: GALERI GAMBAR DOKUMEN */}
+          {activeTab === 'gambar' && selectedMateri.images && selectedMateri.images.length > 0 && (
+            <ImageGallery images={selectedMateri.images} title={selectedMateri.title} />
           )}
 
           {/* 2. INTERACTIVE SUB-BAB READER MODAL / DRAWER */}
