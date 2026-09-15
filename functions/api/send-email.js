@@ -1,8 +1,10 @@
 /**
- * Cloudflare Pages Function: POST /api/send-email
- * Server-side proxy ke Resend API — menghindari CORS.
+ * Cloudflare Pages Function: /api/send-email
+ * Menggunakan onRequest (handles ALL methods) untuk kompatibilitas maksimal.
  */
-export async function onRequestPost({ request, env }) {
+export async function onRequest(context) {
+  const { request, env } = context;
+
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -10,25 +12,52 @@ export async function onRequestPost({ request, env }) {
     'Content-Type': 'application/json',
   };
 
+  // Handle preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
+  // Only allow POST
+  if (request.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ success: false, message: `Method ${request.method} not allowed` }),
+      { status: 405, headers: corsHeaders }
+    );
+  }
+
   try {
     const payload = await request.json();
-    const apiKey = (payload.apiKey && payload.apiKey.trim()) || (env && env.VITE_RESEND_API_KEY) || '';
+
+    // API key: dari payload dulu, lalu env var
+    const apiKey =
+      (payload.apiKey && typeof payload.apiKey === 'string' && payload.apiKey.trim()) ||
+      (env && env.VITE_RESEND_API_KEY) ||
+      '';
 
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Resend API key tidak ditemukan di server.' }),
+        JSON.stringify({ success: false, message: 'Resend API key tidak ditemukan. Set VITE_RESEND_API_KEY di Cloudflare Pages → Settings → Environment variables.' }),
         { status: 400, headers: corsHeaders }
       );
     }
+
+    const from = payload.from || 'PippayLearning <onboarding@resend.dev>';
 
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: payload.from || 'PippayLearning <onboarding@resend.dev>',
+        from,
         to: [payload.to],
         subject: payload.subject,
         html: payload.html,
@@ -40,7 +69,7 @@ export async function onRequestPost({ request, env }) {
 
     if (!resendRes.ok) {
       return new Response(
-        JSON.stringify({ success: false, message: data.message || `Resend error: ${resendRes.status}` }),
+        JSON.stringify({ success: false, message: data.message || `Resend error ${resendRes.status}` }),
         { status: resendRes.status, headers: corsHeaders }
       );
     }
@@ -51,20 +80,8 @@ export async function onRequestPost({ request, env }) {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ success: false, message: err instanceof Error ? err.message : 'Internal server error' }),
+      JSON.stringify({ success: false, message: err instanceof Error ? err.message : String(err) }),
       { status: 500, headers: corsHeaders }
     );
   }
-}
-
-/** Handle preflight OPTIONS */
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
 }
