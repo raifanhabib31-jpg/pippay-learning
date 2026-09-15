@@ -131,41 +131,41 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-dark-850 border border-dark-border rounded-2xl max-w-5xl w-full max-h-[92vh] flex flex-col text-slate-100 shadow-2xl overflow-hidden my-auto">
+      <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col text-slate-800 dark:text-slate-100 shadow-2xl overflow-hidden my-auto">
         {/* Header */}
-        <div className="p-5 border-b border-dark-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-dark-900/60">
+        <div className="p-5 md:p-6 border-b border-slate-100 dark:border-dark-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 dark:bg-dark-900/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent-orange/15 border border-accent-orange/30 flex items-center justify-center text-accent-orange shadow-md">
+            <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-accent-orange/15 border border-orange-200 dark:border-accent-orange/30 flex items-center justify-center text-accent-orange shadow-xs">
               <Award className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white">Tracker Akademik & IPK / IPS</h2>
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Tracker Akademik & IPK / IPS</h2>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                   Semester 1 – 10
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Pantau indeks prestasi, evaluasi cerdas AI, dan tracker nilai harian tugas.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Pantau indeks prestasi, evaluasi cerdas AI, dan tracker nilai harian tugas.</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* IPK Summary Badge */}
-            <div className="px-4 py-2 bg-dark-800 rounded-xl border border-dark-border flex items-center gap-3">
+            <div className="px-4 py-2 bg-white dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-border flex items-center gap-3 shadow-2xs">
               <div>
                 <div className="text-[10px] uppercase font-bold text-slate-400">IPK Kumulatif</div>
-                <div className="text-lg font-bold text-accent-orange leading-tight">{currentIpk}</div>
+                <div className="text-xl font-extrabold text-accent-orange leading-tight">{currentIpk}</div>
               </div>
-              <div className="h-6 w-px bg-dark-border"></div>
+              <div className="h-6 w-px bg-slate-200 dark:bg-dark-border"></div>
               <div>
                 <div className="text-[10px] uppercase font-bold text-slate-400">Total SKS</div>
-                <div className="text-lg font-bold text-white leading-tight">{totalSksCompleted}</div>
+                <div className="text-xl font-extrabold text-slate-800 dark:text-white leading-tight">{totalSksCompleted}</div>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="p-2 hover:bg-dark-750 text-slate-400 hover:text-white rounded-xl transition-colors"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -173,13 +173,13 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
         </div>
 
         {/* Tab Toggle Navigation */}
-        <div className="flex border-b border-dark-border bg-dark-900 px-5 gap-2 pt-2">
+        <div className="flex border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-dark-900 px-5 gap-2 pt-2">
           <button
             onClick={() => setActiveTab('semesters')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl border-b-2 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl border-b-2 transition-colors cursor-pointer ${
               activeTab === 'semesters'
-                ? 'border-accent-orange text-accent-orange bg-dark-850'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-accent-orange text-accent-orange bg-white dark:bg-dark-850'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <TrendingUp className="w-4 h-4" />
@@ -187,10 +187,10 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('daily')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl border-b-2 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl border-b-2 transition-colors cursor-pointer ${
               activeTab === 'daily'
-                ? 'border-purple-400 text-purple-300 bg-dark-850'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-purple-600 text-purple-600 dark:text-purple-300 bg-white dark:bg-dark-850'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Calculator className="w-4 h-4" />
@@ -199,14 +199,14 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
         </div>
 
         {/* Tab Content */}
-        <div className="p-5 flex-1 overflow-y-auto space-y-5">
+        <div className="p-5 md:p-6 flex-1 overflow-y-auto space-y-5">
           {activeTab === 'semesters' ? (
             <div className="space-y-5">
               {/* Semester 1 to 10 Table */}
-              <div className="bg-dark-900 border border-dark-border rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-border rounded-3xl overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-dark-800 text-slate-300 font-semibold border-b border-dark-border">
+                    <thead className="bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-dark-border">
                       <tr>
                         <th className="p-3.5">Semester</th>
                         <th className="p-3.5">Status</th>
@@ -216,24 +216,24 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                         <th className="p-3.5 text-right">Evaluasi AI</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-dark-border">
+                    <tbody className="divide-y divide-slate-100 dark:divide-dark-border">
                       {localSemesters.map((s, idx) => {
                         const isUnderTarget = s.status === 'completed' && s.ips < 3.50 && s.ips > 0;
                         return (
                           <tr 
                             key={s.semester} 
-                            className={`hover:bg-dark-850/60 transition-colors ${
-                              isUnderTarget ? 'bg-amber-950/20' : ''
+                            className={`hover:bg-slate-50 dark:hover:bg-dark-850/60 transition-colors ${
+                              isUnderTarget ? 'bg-amber-50/60 dark:bg-amber-950/20' : ''
                             }`}
                           >
-                            <td className="p-3.5 font-bold text-white whitespace-nowrap">
+                            <td className="p-3.5 font-bold text-slate-900 dark:text-white whitespace-nowrap">
                               Semester {s.semester}
                             </td>
                             <td className="p-3.5 whitespace-nowrap">
                               <select
                                 value={s.status}
                                 onChange={(e) => handleUpdateSemester(idx, 'status', e.target.value)}
-                                className="bg-dark-800 border border-dark-border rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                                className="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-xl px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                               >
                                 <option value="completed">Selesai (Completed)</option>
                                 <option value="active">Sedang Berjalan (Active)</option>
@@ -247,7 +247,7 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                                 max={24}
                                 value={s.sks}
                                 onChange={(e) => handleUpdateSemester(idx, 'sks', Number(e.target.value))}
-                                className="w-16 bg-dark-800 border border-dark-border rounded-lg px-2 py-1 text-xs text-slate-200 text-center focus:outline-none focus:border-purple-500"
+                                className="w-16 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-xl px-2 py-1 text-xs text-slate-800 dark:text-slate-200 text-center focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                               />
                             </td>
                             <td className="p-3.5 whitespace-nowrap">
@@ -259,14 +259,14 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                                   max={4}
                                   value={s.ips}
                                   onChange={(e) => handleUpdateSemester(idx, 'ips', Number(e.target.value))}
-                                  className={`w-20 font-bold border rounded-lg px-2.5 py-1 text-xs text-center focus:outline-none ${
+                                  className={`w-20 font-bold border rounded-xl px-2.5 py-1 text-xs text-center focus:outline-hidden ${
                                     isUnderTarget 
-                                      ? 'bg-amber-950/60 border-amber-500 text-amber-300'
-                                      : 'bg-dark-800 border-dark-border text-white focus:border-purple-500'
+                                      ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-400 dark:border-amber-500 text-amber-900 dark:text-amber-300'
+                                      : 'bg-slate-100 dark:bg-dark-800 border-slate-200 dark:border-dark-border text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/40'
                                   }`}
                                 />
                                 {isUnderTarget && (
-                                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/20 px-1.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-500/30">
                                     <AlertTriangle className="w-3 h-3" />
                                     <span>&lt; 3.50</span>
                                   </span>
@@ -279,7 +279,7 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                                 placeholder="Mata kuliah tersulit / target IP"
                                 value={s.notes || ''}
                                 onChange={(e) => handleUpdateSemester(idx, 'notes', e.target.value)}
-                                className="w-full bg-dark-800 border border-dark-border rounded-lg px-2.5 py-1 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500"
+                                className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-xl px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                               />
                             </td>
                             <td className="p-3.5 text-right whitespace-nowrap">
@@ -287,7 +287,7 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                                 <button
                                   onClick={() => handleGenerateAiEvaluation(s)}
                                   disabled={aiLoading}
-                                  className="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-accent-orange hover:from-amber-500 hover:to-accent-orangeHover text-white rounded-lg font-bold text-[11px] shadow-md flex items-center gap-1.5 ml-auto transition-all transform active:scale-95"
+                                  className="px-3 py-1.5 bg-linear-to-r from-amber-600 to-accent-orange hover:from-amber-500 hover:to-accent-orangeHover text-white rounded-xl font-bold text-[11px] shadow-xs flex items-center gap-1.5 ml-auto transition-all transform active:scale-95 cursor-pointer"
                                 >
                                   {aiLoading && selectedSemesterForAi?.semester === s.semester ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -297,12 +297,12 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                                   <span>{s.aiEvaluation ? 'Lihat Evaluasi AI' : 'Minta Evaluasi AI'}</span>
                                 </button>
                               ) : s.ips >= 3.50 && s.status === 'completed' ? (
-                                <span className="text-[11px] font-semibold text-emerald-400 flex items-center justify-end gap-1">
+                                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1">
                                   <Check className="w-3.5 h-3.5" />
                                   <span>Memenuhi Standar</span>
                                 </span>
                               ) : (
-                                <span className="text-slate-500 text-[11px]">-</span>
+                                <span className="text-slate-400 text-[11px]">-</span>
                               )}
                             </td>
                           </tr>
@@ -315,19 +315,19 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
 
               {/* Active AI Evaluation Panel if selected */}
               {selectedSemesterForAi && selectedSemesterForAi.aiEvaluation && (
-                <div className="bg-dark-850 border border-amber-500/40 rounded-2xl p-6 shadow-xl space-y-3">
-                  <div className="flex items-center justify-between pb-3 border-b border-dark-border">
+                <div className="bg-white dark:bg-dark-850 border border-amber-300 dark:border-amber-500/40 rounded-3xl p-6 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-dark-border">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300">
+                      <div className="p-1.5 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
                         <Sparkles className="w-4 h-4" />
                       </div>
-                      <h3 className="font-bold text-sm text-white">
+                      <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                         Rencana Perbaikan & Evaluasi AI (Semester {selectedSemesterForAi.semester} - IPS {selectedSemesterForAi.ips.toFixed(2)})
                       </h3>
                     </div>
                     <button
                       onClick={() => setSelectedSemesterForAi(null)}
-                      className="text-slate-400 hover:text-white text-xs"
+                      className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs cursor-pointer"
                     >
                       Tutup
                     </button>
@@ -345,11 +345,11 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
             <div className="space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-slate-400">Filter Mata Kuliah:</span>
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Filter Mata Kuliah:</span>
                   <select
                     value={courseFilter}
                     onChange={(e) => setCourseFilter(e.target.value)}
-                    className="bg-dark-800 border border-dark-border rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                    className="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                   >
                     <option value="all">Semua Mata Kuliah ({localDailyGrades.length} nilai)</option>
                     {uniqueCourses.map(c => (
@@ -360,7 +360,7 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
 
                 <button
                   onClick={() => setIsAddGradeOpen(true)}
-                  className="px-4 py-2 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all shrink-0"
+                  className="px-4 py-2 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-orange-950/20 transition-all shrink-0 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Tambah Nilai Harian</span>
@@ -369,16 +369,16 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
 
               {/* Add Grade Form Modal/Drawer */}
               {isAddGradeOpen && (
-                <form onSubmit={handleAddDailyGrade} className="bg-dark-900 border border-purple-500/40 rounded-2xl p-5 space-y-4 shadow-lg">
-                  <div className="flex items-center justify-between pb-2 border-b border-dark-border">
-                    <h4 className="font-bold text-xs text-white flex items-center gap-2">
+                <form onSubmit={handleAddDailyGrade} className="bg-slate-50 dark:bg-dark-900 border border-purple-300 dark:border-purple-500/40 rounded-3xl p-5 space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-dark-border">
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
                       <Plus className="w-4 h-4 text-accent-orange" />
                       <span>Input Nilai Tugas / Kuis / Praktikum</span>
                     </h4>
                     <button
                       type="button"
                       onClick={() => setIsAddGradeOpen(false)}
-                      className="text-slate-400 hover:text-white"
+                      className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -386,23 +386,23 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label className="block text-slate-300 font-semibold mb-1">Nama Mata Kuliah *</label>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Nama Mata Kuliah *</label>
                       <input
                         type="text"
                         placeholder="Contoh: Basis Data, Struktur Data"
                         value={newCourseName}
                         onChange={(e) => setNewCourseName(e.target.value)}
-                        className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                        className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-slate-300 font-semibold mb-1">Kategori Nilai</label>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Kategori Nilai</label>
                       <select
                         value={newCategory}
                         onChange={(e) => setNewCategory(e.target.value as GradeCategory)}
-                        className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                        className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                       >
                         <option value="tugas">Tugas Kuliah</option>
                         <option value="kuis">Kuis Mingguan</option>
@@ -414,56 +414,56 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-slate-300 font-semibold mb-1">Judul / Deskripsi Tugas *</label>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Judul / Deskripsi Tugas *</label>
                       <input
                         type="text"
                         placeholder="Contoh: Tugas 1 - Normalisasi & Indexing"
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
-                        className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                        className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                         required
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-slate-300 font-semibold mb-1">Nilai (0 - 100) *</label>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Nilai (0 - 100) *</label>
                         <input
                           type="number"
                           min={0}
                           max={100}
                           value={newScore}
                           onChange={(e) => setNewScore(Number(e.target.value))}
-                          className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500 text-center font-bold"
+                          className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 text-center font-bold"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-300 font-semibold mb-1">Bobot Nilai (%)</label>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Bobot Nilai (%)</label>
                         <input
                           type="number"
                           min={1}
                           max={100}
                           value={newWeight}
                           onChange={(e) => setNewWeight(Number(e.target.value))}
-                          className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500 text-center"
+                          className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 text-center"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-2 border-t border-dark-border">
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-dark-border">
                     <button
                       type="button"
                       onClick={() => setIsAddGradeOpen(false)}
-                      className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-300 rounded-xl text-xs font-semibold"
+                      className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold shadow-md"
+                      className="px-5 py-2 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold shadow-md shadow-orange-950/20 cursor-pointer"
                     >
                       Simpan Nilai
                     </button>
@@ -473,8 +473,8 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
 
               {/* Daily Grades Grid */}
               {filteredGrades.length === 0 ? (
-                <div className="border border-dashed border-dark-border rounded-2xl p-8 text-center text-xs text-slate-400 space-y-2">
-                  <FileText className="w-8 h-8 text-slate-600 mx-auto" />
+                <div className="border border-dashed border-slate-300 dark:border-dark-border rounded-3xl p-8 text-center text-xs text-slate-400 space-y-2 bg-white/50 dark:bg-dark-900/40">
+                  <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
                   <p>Belum ada nilai harian tercatat.</p>
                 </div>
               ) : (
@@ -482,37 +482,37 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                   {filteredGrades.map((g) => (
                     <div
                       key={g.id}
-                      className="p-4 bg-dark-900 border border-dark-border hover:border-purple-500/40 rounded-2xl flex flex-col justify-between shadow-sm space-y-3"
+                      className="p-5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-border hover:border-purple-500/40 rounded-3xl flex flex-col justify-between shadow-2xs hover:shadow-xs space-y-3"
                     >
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                             {g.category} • Bobot {g.weight}%
                           </span>
-                          <span className="text-xs text-slate-500">{g.date}</span>
+                          <span className="text-xs text-slate-400">{g.date}</span>
                         </div>
-                        <h4 className="text-sm font-bold text-white">{g.title}</h4>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">{g.title}</h4>
                         <p className="text-xs text-accent-orange font-semibold">{g.courseName}</p>
                         {g.notes && (
-                          <p className="text-[11px] text-slate-400 bg-dark-850 p-2 rounded-lg border border-dark-border/60">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-dark-850 p-2.5 rounded-xl border border-slate-200 dark:border-dark-border/60">
                             {g.notes}
                           </p>
                         )}
                       </div>
 
-                      <div className="pt-3 border-t border-dark-border flex items-center justify-between">
+                      <div className="pt-3 border-t border-slate-100 dark:border-dark-border flex items-center justify-between">
                         <div className="flex items-baseline gap-1">
-                          <span className={`text-xl font-bold ${
-                            g.score >= 85 ? 'text-emerald-400' : g.score >= 70 ? 'text-amber-400' : 'text-rose-400'
+                          <span className={`text-2xl font-extrabold ${
+                            g.score >= 85 ? 'text-emerald-500 dark:text-emerald-400' : g.score >= 70 ? 'text-amber-500 dark:text-amber-400' : 'text-rose-500 dark:text-rose-400'
                           }`}>
                             {g.score}
                           </span>
-                          <span className="text-xs text-slate-500">/ 100</span>
+                          <span className="text-xs text-slate-400">/ 100</span>
                         </div>
 
                         <button
                           onClick={() => handleDeleteDailyGrade(g.id)}
-                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-dark-800 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-dark-800 rounded-lg transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

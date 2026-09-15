@@ -56,13 +56,13 @@ const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, t
   }, [lightboxIdx]);
 
   return (
-    <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 md:p-8 space-y-5 shadow-sm">
-      <div className="flex items-center justify-between pb-4 border-b border-dark-border">
+    <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 space-y-5 shadow-xs">
+      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-dark-border">
         <div>
-          <h2 className="text-lg font-bold text-white">Galeri Gambar Dokumen</h2>
-          <p className="text-xs text-slate-400 mt-0.5">{images.length} halaman/slide dari "{title}" — klik gambar untuk perbesar</p>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Galeri Gambar Dokumen</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{images.length} halaman/slide dari "{title}" — klik gambar untuk perbesar</p>
         </div>
-        <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full">
+        <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-full">
           {images.length} Gambar
         </span>
       </div>
@@ -73,7 +73,7 @@ const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, t
           <button
             key={idx}
             onClick={() => openLightbox(idx)}
-            className="group relative rounded-xl overflow-hidden border border-dark-border hover:border-amber-500/60 transition-all bg-dark-800 aspect-[3/4] focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="group relative rounded-2xl overflow-hidden border border-slate-200 dark:border-dark-border hover:border-amber-500/60 transition-all bg-slate-100 dark:bg-dark-800 aspect-3/4 focus:outline-hidden focus:ring-2 focus:ring-amber-500 cursor-pointer"
           >
             <img
               src={src}
@@ -82,11 +82,11 @@ const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, t
               loading="lazy"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-lg">
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold bg-black/60 px-2.5 py-1 rounded-xl">
                 🔍 Perbesar
               </span>
             </div>
-            <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold bg-black/70 text-slate-200 px-1.5 py-0.5 rounded-md">
+            <span className="absolute bottom-2 left-2 text-[10px] font-bold bg-black/70 text-white px-2 py-0.5 rounded-md">
               {idx + 1}
             </span>
           </button>
@@ -115,7 +115,7 @@ const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, t
             <img
               src={images[lightboxIdx]}
               alt={`Halaman ${lightboxIdx + 1}`}
-              className="max-h-[82vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
+              className="max-h-[82vh] w-auto max-w-full object-contain rounded-2xl shadow-2xl border border-white/10"
             />
             <div className="flex items-center gap-4">
               <span className="text-xs text-slate-300 font-semibold bg-white/10 px-3 py-1 rounded-full">
@@ -201,55 +201,47 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
   const [newFolderCode, setNewFolderCode] = useState('');
   const [newFolderDesc, setNewFolderDesc] = useState('');
 
-  // Filtering folders
+  const currentFolder = folders.find(f => f.id === selectedFolderId);
+  const folderMateriList = materi.filter(m => m.folderId === selectedFolderId);
+
+  // Filter folders by search query
   const filteredFolders = folders.filter(f => 
-    searchQuery 
-      ? f.name.toLowerCase().includes(searchQuery.toLowerCase()) || (f.code && f.code.toLowerCase().includes(searchQuery.toLowerCase()))
-      : true
+    f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (f.code && f.code.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Pagination for folders
-  const totalPages = Math.ceil(filteredFolders.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredFolders.length / itemsPerPage);
   const paginatedFolders = filteredFolders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  // Filtering materi inside active folder
-  const currentFolder = folders.find(f => f.id === (selectedMateri ? selectedMateri.folderId : selectedFolderId));
-  const folderMateriList = materi.filter(m => m.folderId === selectedFolderId);
 
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
 
-    const newFolder: Folder = {
+    const newF: Folder = {
       id: 'f-' + Date.now(),
       name: newFolderName.trim(),
       code: newFolderCode.trim() || undefined,
-      color: 'purple',
       description: newFolderDesc.trim() || undefined,
+      color: 'indigo',
       createdAt: new Date().toISOString(),
     };
 
-    onSaveFolder(newFolder);
+    onSaveFolder(newF);
     setIsFolderModalOpen(false);
     setNewFolderName('');
     setNewFolderCode('');
     setNewFolderDesc('');
+    setSelectedFolderId(newF.id);
   };
 
   const handleProcessDocument = async () => {
-    if (!targetFolderId) {
-      alert('Pilih folder mata kuliah terlebih dahulu.');
-      return;
-    }
-
     let contentToSummarize = '';
     let fileType: Materi['fileType'] = 'text';
-    let originalName = '';
-    let fileSize = '';
-    const title = docTitle.trim() || (selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, '') : 'Ringkasan Materi Baru');
+    let originalName = 'Catatan Manual';
+    let fileSize = '0 KB';
+    const title = docTitle.trim() || selectedFile?.name.replace(/\.[^/.]+$/, '') || 'Catatan Baru';
 
     setIsSummarizing(true);
-
     let extractedImages: string[] = [];
 
     try {
@@ -450,67 +442,62 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
       } else {
-        const textToRead = activeChapter ? activeChapter.content : selectedMateri.summary;
-        const cleanText = textToRead.replace(/[#*_`$]/g, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
+        const textToRead = selectedMateri.summary.replace(/[#*_`]/g, '');
+        const utterance = new SpeechSynthesisUtterance(textToRead);
         utterance.lang = 'id-ID';
-        utterance.rate = 1.0;
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
-        window.speechSynthesis.speak(utterance);
         setIsSpeaking(true);
+        window.speechSynthesis.speak(utterance);
       }
-    } else {
-      alert('Browser Anda tidak mendukung Text-to-Speech.');
     }
+  };
+
+  const handleShare = () => {
+    if (!selectedMateri) return;
+    navigator.clipboard.writeText(`${window.location.href}#materi-${selectedMateri.id}`);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
   };
 
   const handleExportPDF = () => {
     window.print();
   };
 
-  const handleShare = () => {
-    if (!selectedMateri) return;
-    const shareText = `[PippayLearning] Materi: ${selectedMateri.title}\nMata Kuliah: ${currentFolder?.name || '-'}\n\n${selectedMateri.description || selectedMateri.summary.slice(0, 300)}`;
-    navigator.clipboard.writeText(shareText);
-    setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 2000);
-  };
-
   const chaptersList = selectedMateri?.chapters || [];
   const completedChaptersCount = chaptersList.filter(c => c.isCompleted).length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. PELAJARIN.AI-STYLE DOCUMENT & SUB-BAB VIEW */}
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* 1. READER VIEW: DETIL MATERI DENGAN BAB & SUB-BAB */}
       {selectedMateri ? (
         <div className="space-y-6">
-          {/* Back Navigation Bar */}
+          {/* Top Breadcrumbs / Back Navigation */}
           <div className="flex items-center justify-between">
             <button
               onClick={() => {
                 setSelectedMateri(null);
                 setActiveChapter(null);
               }}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-300 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Kembali ke {currentFolder ? currentFolder.name : 'Dashboard'}</span>
+              <span>Kembali ke Daftar Materi {currentFolder?.name ? `(${currentFolder.name})` : ''}</span>
             </button>
           </div>
 
           {/* Main Title & Executive Header Card */}
-          <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
+          <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 space-y-6 shadow-xs">
             {/* Badges & Meta */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
                   {currentFolder?.name || 'Mata Kuliah'}
                 </span>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-dark-750 text-slate-300 border border-dark-border">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
                   {chaptersList.length} bab
                 </span>
-                <span className="text-xs text-slate-400 flex items-center gap-1.5 ml-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 ml-1">
                   <Calendar className="w-3.5 h-3.5" />
                   {new Date(selectedMateri.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
@@ -521,7 +508,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 <button
                   onClick={handleExtractChapters}
                   disabled={isExtractingChapters}
-                  className="p-2 bg-dark-800 hover:bg-dark-750 disabled:opacity-50 text-purple-300 hover:text-purple-200 rounded-xl border border-purple-500/30 transition-colors"
+                  className="p-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 disabled:opacity-50 text-purple-600 dark:text-purple-300 rounded-xl border border-slate-200 dark:border-purple-500/30 transition-colors"
                   title="Ekstrak / Susun Ulang Bab dengan AI"
                 >
                   {isExtractingChapters ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
@@ -533,7 +520,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       setSelectedMateri(null);
                     }
                   }}
-                  className="p-2 bg-dark-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 rounded-xl border border-dark-border hover:border-rose-800/40 transition-colors"
+                  className="p-2 bg-slate-100 dark:bg-dark-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-500 rounded-xl border border-slate-200 dark:border-dark-border transition-colors"
                   title="Hapus Materi"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -543,38 +530,38 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
             {/* Title & Description */}
             <div className="space-y-3">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {selectedMateri.title}
               </h1>
-              <p className="text-sm text-slate-300 leading-relaxed max-w-4xl">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
                 {selectedMateri.description || selectedMateri.summary.slice(0, 220) + '...'}
               </p>
             </div>
 
-            {/* Quick Action Pills (Matching Screenshot) */}
-            <div className="flex items-center gap-2.5 flex-wrap pt-2 border-t border-dark-border/60">
+            {/* Quick Action Pills */}
+            <div className="flex items-center gap-2.5 flex-wrap pt-2 border-t border-slate-100 dark:border-dark-border/60">
               <button
                 onClick={() => onStartQuizFromMateri(selectedMateri)}
-                className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 hover:text-white rounded-full text-xs font-semibold border border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50"
+                className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-full text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50 cursor-pointer"
               >
-                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                <Layers className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                 <span>Flashcards</span>
               </button>
 
               <button
                 onClick={() => onStartQuizFromMateri(selectedMateri)}
-                className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 hover:text-white rounded-full text-xs font-semibold border border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50"
+                className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-full text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50 cursor-pointer"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+                <HelpCircle className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                 <span>Kuis</span>
               </button>
 
               <button
                 onClick={() => setActiveTab(activeTab === 'mindmap' ? 'bab' : 'mindmap')}
-                className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all ${
+                className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'mindmap'
-                    ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-900/30'
-                    : 'bg-dark-800 hover:bg-dark-750 text-slate-200 border-dark-border hover:border-purple-500/50'
+                    ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-600/30'
+                    : 'bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-border'
                 }`}
               >
                 <GitFork className="w-3.5 h-3.5 text-purple-300" />
@@ -583,24 +570,24 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
               <button
                 onClick={() => setActiveTab(activeTab === 'dokumen' ? 'bab' : 'dokumen')}
-                className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all ${
+                className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer ${
                   activeTab === 'dokumen'
-                    ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-900/30'
-                    : 'bg-dark-800 hover:bg-dark-750 text-slate-200 border-dark-border hover:border-purple-500/50'
+                    ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-600/30'
+                    : 'bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-border'
                 }`}
               >
                 <FileText className="w-3.5 h-3.5 text-purple-300" />
                 <span>Dokumen Lengkap</span>
               </button>
 
-              {/* Tab Gambar — hanya muncul jika materi punya images */}
+              {/* Tab Gambar */}
               {selectedMateri.images && selectedMateri.images.length > 0 && (
                 <button
                   onClick={() => setActiveTab(activeTab === 'gambar' ? 'bab' : 'gambar')}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all ${
+                  className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer ${
                     activeTab === 'gambar'
                       ? 'bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-900/30'
-                      : 'bg-dark-800 hover:bg-dark-750 text-slate-200 border-dark-border hover:border-amber-500/50'
+                      : 'bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-border'
                   }`}
                 >
                   <BookMarked className="w-3.5 h-3.5 text-amber-300" />
@@ -610,15 +597,15 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
               <button
                 onClick={handleShare}
-                className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 hover:text-white rounded-full text-xs font-semibold border border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50"
+                className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-full text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-all cursor-pointer"
               >
-                {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-slate-400" />}
+                {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-slate-400" />}
                 <span>{shareCopied ? 'Tersalin' : 'Bagikan'}</span>
               </button>
 
               <button
                 onClick={handleExportPDF}
-                className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 hover:text-white rounded-full text-xs font-semibold border border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50"
+                className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-full text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-all cursor-pointer"
               >
                 <FileDown className="w-3.5 h-3.5 text-slate-400" />
                 <span>Ekspor PDF</span>
@@ -626,8 +613,8 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
               <button
                 onClick={handleSpeakSummary}
-                className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all ${
-                  isSpeaking ? 'bg-amber-600 text-white border-amber-500' : 'bg-dark-800 hover:bg-dark-750 text-slate-200 border-dark-border'
+                className={`px-4 py-2 rounded-full text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer ${
+                  isSpeaking ? 'bg-amber-600 text-white border-amber-500' : 'bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-border'
                 }`}
                 title={isSpeaking ? 'Hentikan Audio' : 'Dengarkan Ringkasan'}
               >
@@ -637,15 +624,15 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
             </div>
           </div>
 
-          {/* VIEW TAB 1: BAB / SUB-BAB LIST (Screenshot View) */}
+          {/* VIEW TAB 1: BAB / SUB-BAB LIST */}
           {activeTab === 'bab' && (
             <div className="space-y-4">
               {/* Bab Header */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2.5">
-                  <BookOpen className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-lg font-bold text-white tracking-tight">Bab</h2>
-                  <span className="text-xs font-semibold text-slate-400">
+                  <BookOpen className="w-5 h-5 text-amber-500" />
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Bab</h2>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     ({completedChaptersCount} dari {chaptersList.length} Selesai)
                   </span>
                 </div>
@@ -656,7 +643,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       setEditingChapter({});
                       setIsEditChapterModalOpen(true);
                     }}
-                    className="px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-dark-border flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-1.5 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Tambah Bab</span>
@@ -668,7 +655,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                         setIsEditChapterModalOpen(true);
                       }
                     }}
-                    className="px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-dark-border flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-1.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-1.5 transition-colors"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Ubah</span>
@@ -685,27 +672,27 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       onClick={() => setActiveChapter(chapter)}
                       className={`group flex items-center justify-between p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
                         chapter.isCompleted
-                          ? 'bg-dark-850/90 border-dark-border hover:border-purple-500/50 hover:bg-dark-800'
-                          : 'bg-dark-850 border-dark-border hover:border-purple-500/60 hover:bg-dark-800'
+                          ? 'bg-white dark:bg-dark-850/90 border-slate-200 dark:border-dark-border hover:border-purple-500/50 hover:bg-slate-50 dark:hover:bg-dark-800'
+                          : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-border hover:border-purple-500/60 hover:bg-slate-50 dark:hover:bg-dark-800'
                       }`}
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         {/* Number Badge */}
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors ${
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
                           chapter.isCompleted
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-dark-750 text-slate-300 border border-dark-border group-hover:bg-purple-600 group-hover:text-white'
+                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30'
+                            : 'bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border group-hover:bg-purple-600 group-hover:text-white'
                         }`}>
                           {chapter.number}
                         </div>
 
                         {/* Title & Summary */}
                         <div className="min-w-0 space-y-0.5">
-                          <h3 className="text-sm md:text-base font-semibold text-slate-100 group-hover:text-purple-300 transition-colors truncate">
+                          <h3 className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors truncate">
                             {chapter.title}
                           </h3>
                           {chapter.summary && (
-                            <p className="text-xs text-slate-400 line-clamp-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                               {chapter.summary}
                             </p>
                           )}
@@ -713,9 +700,9 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       </div>
 
                       {/* Right Action: Completed Checkmark & Duration */}
-                      <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                      <div className="flex items-center gap-3 shrink-0 ml-3">
                         {chapter.durationMinutes && (
-                          <span className="text-[11px] text-slate-500 hidden sm:inline-block">
+                          <span className="text-[11px] text-slate-400 hidden sm:inline-block">
                             {chapter.durationMinutes} mnt baca
                           </span>
                         )}
@@ -725,22 +712,22 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                           title={chapter.isCompleted ? 'Tandai belum selesai' : 'Tandai selesai dibaca'}
                         >
                           {chapter.isCompleted ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-500/20" />
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-500/20" />
                           ) : (
-                            <Circle className="w-5 h-5 text-slate-600 hover:text-slate-400" />
+                            <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600 hover:text-slate-500" />
                           )}
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-12 bg-dark-850 border border-dark-border rounded-2xl space-y-3">
-                    <BookMarked className="w-10 h-10 text-slate-600 mx-auto" />
-                    <p className="text-sm font-semibold text-slate-300">Belum ada daftar Bab terstruktur</p>
+                  <div className="text-center py-12 bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl space-y-3 shadow-xs">
+                    <BookMarked className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Belum ada daftar Bab terstruktur</p>
                     <button
                       onClick={handleExtractChapters}
                       disabled={isExtractingChapters}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-md shadow-purple-900/30"
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-md shadow-purple-600/30"
                     >
                       {isExtractingChapters ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                       <span>Susun Bab Otomatis dengan AI</span>
@@ -753,14 +740,14 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
           {/* VIEW TAB 2: DOKUMEN LENGKAP */}
           {activeTab === 'dokumen' && (
-            <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
-              <div className="flex items-center justify-between pb-4 border-b border-dark-border">
-                <h2 className="text-lg font-bold text-white">Ringkasan Dokumen Lengkap</h2>
+            <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 space-y-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-dark-border">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Ringkasan Dokumen Lengkap</h2>
                 <button
                   onClick={handleCopySummary}
-                  className="px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-200 rounded-xl text-xs font-medium border border-dark-border flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium border border-slate-200 dark:border-dark-border flex items-center gap-1.5"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                   <span>{copied ? 'Tersalin' : 'Salin Semua Teks'}</span>
                 </button>
               </div>
@@ -775,11 +762,11 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
           {/* VIEW TAB 3: MIND MAP CONCEPT NODES */}
           {activeTab === 'mindmap' && (
-            <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
-              <div className="flex items-center justify-between pb-4 border-b border-dark-border">
+            <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 space-y-6 shadow-xs">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-dark-border">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Peta Konsep (Mind Map Structure)</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Struktur hierarki materi dan hubungan sub-bab perkuliahan</p>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Peta Konsep (Mind Map Structure)</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Struktur hierarki materi dan hubungan sub-bab perkuliahan</p>
                 </div>
               </div>
 
@@ -788,26 +775,26 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   <div 
                     key={chapter.id}
                     onClick={() => setActiveChapter(chapter)}
-                    className="p-5 bg-dark-800 border border-dark-border hover:border-purple-500/50 rounded-2xl space-y-3 cursor-pointer transition-all"
+                    className="p-5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-border hover:border-purple-500/50 rounded-2xl space-y-3 cursor-pointer transition-all shadow-2xs hover:shadow-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                         Bab {chapter.number}
                       </span>
                       {chapter.isCompleted && (
-                        <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1">
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Selesai
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-bold text-white">{chapter.title}</h3>
-                    <p className="text-xs text-slate-400">{chapter.summary}</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{chapter.title}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{chapter.summary}</p>
                     
                     {chapter.keyPoints && chapter.keyPoints.length > 0 && (
-                      <div className="space-y-1.5 pt-2 border-t border-dark-border/60">
+                      <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-dark-border/60">
                         {chapter.keyPoints.map((kp, i) => (
-                          <div key={i} className="text-[11px] text-slate-300 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1 flex-shrink-0" />
+                          <div key={i} className="text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1 shrink-0" />
                             <span>{kp}</span>
                           </div>
                         ))}
@@ -824,41 +811,41 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
             <ImageGallery images={selectedMateri.images} title={selectedMateri.title} />
           )}
 
-          {/* 2. INTERACTIVE SUB-BAB READER MODAL / DRAWER */}
+          {/* 2. INTERACTIVE SUB-BAB READER MODAL */}
           {activeChapter && (
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-dark-900 border border-dark-border rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-scale-in">
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-border rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
                 {/* Modal Reader Header */}
-                <div className="p-6 border-b border-dark-border flex items-center justify-between gap-4">
+                <div className="p-6 border-b border-slate-100 dark:border-dark-border flex items-center justify-between gap-4">
                   <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 font-bold">
                         Bab {activeChapter.number} dari {chaptersList.length}
                       </span>
                       <span>•</span>
                       <span>{activeChapter.durationMinutes || 5} menit baca</span>
                     </div>
-                    <h2 className="text-lg md:text-xl font-bold text-white truncate">
+                    <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white truncate">
                       {activeChapter.title}
                     </h2>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleToggleChapterCompletion(activeChapter.id)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
                         activeChapter.isCompleted
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                          : 'bg-dark-800 text-slate-300 border-dark-border hover:bg-dark-750'
+                          ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
+                          : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-border hover:bg-slate-200'
                       }`}
                     >
-                      {activeChapter.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Circle className="w-4 h-4" />}
+                      {activeChapter.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Circle className="w-4 h-4" />}
                       <span>{activeChapter.isCompleted ? 'Selesai Dibaca' : 'Tandai Selesai'}</span>
                     </button>
 
                     <button
                       onClick={() => setActiveChapter(null)}
-                      className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-dark-800 transition-colors"
+                      className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -869,14 +856,14 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1">
                   {/* Summary Callout */}
                   {activeChapter.summary && (
-                    <div className="p-4 bg-purple-950/30 border border-purple-500/30 rounded-2xl text-xs text-purple-200 leading-relaxed">
-                      <strong className="text-purple-300 block mb-1">Rangkuman Singkat:</strong>
+                    <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-500/30 rounded-2xl text-xs text-purple-900 dark:text-purple-200 leading-relaxed">
+                      <strong className="text-purple-700 dark:text-purple-300 block mb-1">Rangkuman Singkat:</strong>
                       {activeChapter.summary}
                     </div>
                   )}
 
                   {/* Chapter Markdown Content */}
-                  <div className="prose-custom max-w-none text-slate-200">
+                  <div className="prose-custom max-w-none text-slate-800 dark:text-slate-200">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {activeChapter.content}
                     </ReactMarkdown>
@@ -884,15 +871,15 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
                   {/* Key Takeaways Box */}
                   {activeChapter.keyPoints && activeChapter.keyPoints.length > 0 && (
-                    <div className="p-5 bg-dark-800 border border-dark-border rounded-2xl space-y-2.5">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Check className="w-4 h-4 text-purple-400" />
+                    <div className="p-5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl space-y-2.5">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <Check className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                         <span>Poin Kunci yang Wajib Dipahami</span>
                       </h4>
-                      <ul className="space-y-1.5 text-xs text-slate-300">
+                      <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                         {activeChapter.keyPoints.map((point, idx) => (
                           <li key={idx} className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 flex-shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0" />
                             <span>{point}</span>
                           </li>
                         ))}
@@ -902,14 +889,14 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 </div>
 
                 {/* Modal Reader Footer Navigation */}
-                <div className="p-5 border-t border-dark-border flex items-center justify-between bg-dark-850/50 rounded-b-3xl">
+                <div className="p-5 border-t border-slate-100 dark:border-dark-border flex items-center justify-between bg-slate-50 dark:bg-dark-850/50 rounded-b-3xl">
                   <button
                     disabled={activeChapter.number <= 1}
                     onClick={() => {
                       const prevChap = chaptersList.find(c => c.number === activeChapter.number - 1);
                       if (prevChap) setActiveChapter(prevChap);
                     }}
-                    className="px-4 py-2 bg-dark-800 hover:bg-dark-750 disabled:opacity-30 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-dark-border transition-colors"
+                    className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 disabled:opacity-30 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-dark-border transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     <span>Bab Sebelumnya</span>
@@ -917,7 +904,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
                   <button
                     onClick={() => onStartQuizFromMateri(selectedMateri)}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-900/30 transition-colors"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/30 transition-colors"
                   >
                     <HelpCircle className="w-4 h-4" />
                     <span>Latihan Soal Bab Ini</span>
@@ -929,7 +916,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       const nextChap = chaptersList.find(c => c.number === activeChapter.number + 1);
                       if (nextChap) setActiveChapter(nextChap);
                     }}
-                    className="px-4 py-2 bg-dark-800 hover:bg-dark-750 disabled:opacity-30 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-dark-border transition-colors"
+                    className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 disabled:opacity-30 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-dark-border transition-colors"
                   >
                     <span>Bab Selanjutnya</span>
                     <ChevronRight className="w-4 h-4" />
@@ -942,14 +929,14 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
           {/* 3. EDIT / ADD CHAPTER MODAL */}
           {isEditChapterModalOpen && (
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-dark-900 border border-dark-border rounded-3xl w-full max-w-xl p-6 md:p-8 space-y-6 shadow-2xl">
-                <div className="flex items-center justify-between border-b border-dark-border pb-4">
-                  <h3 className="text-lg font-bold text-white">
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-border rounded-3xl w-full max-w-xl p-6 md:p-8 space-y-6 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-border pb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                     {editingChapter?.id ? 'Ubah Bab' : 'Tambah Bab Baru'}
                   </h3>
                   <button
                     onClick={() => setIsEditChapterModalOpen(false)}
-                    className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-dark-800"
+                    className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -957,7 +944,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
                 <form onSubmit={handleSaveChapterEdit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Judul Bab / Sub-Bab *
                     </label>
                     <input
@@ -966,12 +953,12 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       value={editingChapter?.title || ''}
                       onChange={(e) => setEditingChapter(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="Contoh: Primary Key dan Candidate Key"
-                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-sm text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-xl text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Ringkasan Singkat (1-2 kalimat)
                     </label>
                     <input
@@ -979,12 +966,12 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       value={editingChapter?.summary || ''}
                       onChange={(e) => setEditingChapter(prev => ({ ...prev, summary: e.target.value }))}
                       placeholder="Ringkasan poin yang dipelajari..."
-                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-sm text-white focus:outline-none focus:border-purple-500"
+                      className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-xl text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                       Isi Penjelasan Materi (Format Markdown) *
                     </label>
                     <textarea
@@ -993,16 +980,16 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       value={editingChapter?.content || ''}
                       onChange={(e) => setEditingChapter(prev => ({ ...prev, content: e.target.value }))}
                       placeholder="Tuliskan penjelasan materi lengkap di sini..."
-                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 leading-relaxed font-mono"
+                      className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-xl text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 leading-relaxed font-mono"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-dark-border">
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-dark-border">
                     {editingChapter?.id ? (
                       <button
                         type="button"
                         onClick={() => handleDeleteChapter(editingChapter.id!)}
-                        className="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 rounded-xl text-xs font-semibold border border-rose-800/40 flex items-center gap-1.5"
+                        className="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold border border-rose-200 dark:border-rose-800/40 flex items-center gap-1.5"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Hapus Bab</span>
@@ -1013,13 +1000,13 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => setIsEditChapterModalOpen(false)}
-                        className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-300 rounded-xl text-xs font-semibold"
+                        className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold"
                       >
                         Batal
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-900/30"
+                        className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/30"
                       >
                         Simpan Bab
                       </button>
@@ -1037,21 +1024,21 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedFolderId(null)}
-                className="p-2 bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white rounded-xl border border-dark-border transition-colors"
+                className="p-2.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-2xl border border-slate-200 dark:border-dark-border transition-colors"
                 title="Kembali ke Daftar Mata Pelajaran"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                     {currentFolder.code || 'Mata Kuliah'}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {folderMateriList.length} Catatan Tersimpan
                   </span>
                 </div>
-                <h2 className="text-xl font-bold text-white mt-0.5">{currentFolder.name}</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">{currentFolder.name}</h2>
               </div>
             </div>
 
@@ -1061,7 +1048,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   setTargetFolderId(currentFolder.id);
                   setIsUploadModalOpen(true);
                 }}
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-950/40 transition-colors"
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-purple-600/30 transition-colors"
               >
                 <FileUp className="w-4 h-4" />
                 <span>Unggah / Tambah Materi</span>
@@ -1074,7 +1061,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                     setSelectedFolderId(null);
                   }
                 }}
-                className="p-2.5 bg-dark-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 rounded-xl border border-dark-border hover:border-rose-800/40 transition-colors"
+                className="p-2.5 bg-slate-100 dark:bg-dark-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-500 rounded-2xl border border-slate-200 dark:border-dark-border transition-colors"
                 title="Hapus Mata Kuliah"
               >
                 <Trash2 className="w-4 h-4" />
@@ -1089,43 +1076,43 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 <div
                   key={item.id}
                   onClick={() => setSelectedMateri(item)}
-                  className="bg-dark-850 border border-dark-border hover:border-purple-500/50 rounded-2xl p-5 space-y-4 cursor-pointer transition-all hover:shadow-lg hover:shadow-purple-950/20 group"
+                  className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border hover:border-purple-500/50 rounded-3xl p-5 space-y-4 cursor-pointer transition-all hover:shadow-md group"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="p-2.5 rounded-xl bg-dark-800 text-purple-400 border border-dark-border group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <div className="p-3 rounded-2xl bg-purple-50 dark:bg-dark-800 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-dark-border group-hover:bg-purple-600 group-hover:text-white transition-colors">
                       <FileText className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-dark-750 text-slate-300 border border-dark-border">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
                       {item.chapters?.length || 0} Bab
                     </span>
                   </div>
 
                   <div className="space-y-1.5">
-                    <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-2">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-slate-400 line-clamp-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                       {item.description || item.summary.slice(0, 100)}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-dark-border/60 text-[11px] text-slate-400">
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-dark-border/60 text-[11px] text-slate-400">
                     <span>{new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                    <span className="text-purple-400 font-semibold group-hover:underline">Buka Bab & Materi →</span>
+                    <span className="text-purple-600 dark:text-purple-400 font-semibold group-hover:underline">Buka Bab & Materi →</span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-dark-850 border border-dark-border rounded-2xl space-y-3">
-              <FileText className="w-10 h-10 text-slate-600 mx-auto" />
-              <p className="text-sm font-semibold text-slate-300">Belum ada materi untuk mata kuliah ini</p>
+            <div className="text-center py-16 bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl space-y-3 shadow-xs">
+              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Belum ada materi untuk mata kuliah ini</p>
               <button
                 onClick={() => {
                   setTargetFolderId(currentFolder.id);
                   setIsUploadModalOpen(true);
                 }}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2"
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 shadow-md shadow-purple-600/30"
               >
                 <Upload className="w-4 h-4" />
                 <span>Unggah Dokumen PDF / Catatan Pertama</span>
@@ -1136,26 +1123,33 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       ) : (
         /* 3. ROOT VIEW: ALL FOLDERS / SUBJECTS GRID */
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">Mata Pelajaran & Ringkasan Materi</h1>
-              <p className="text-xs text-slate-400 mt-1">
-                Pilih mata kuliah untuk melihat catatan, susunan bab, kuis, dan analisis AI.
+          {/* Top Hero Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-indigo-100 via-purple-50 to-indigo-50 dark:from-[#1b1c35] dark:via-[#161726] dark:to-dark-850 border border-indigo-200/80 dark:border-indigo-900/30 p-6 md:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2 relative z-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-200/60 dark:bg-indigo-500/20 text-indigo-900 dark:text-indigo-300 border border-indigo-300/60 dark:border-indigo-500/30">
+                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span>Manajemen Modul & Dokumen AI</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-indigo-950 dark:text-indigo-100 tracking-tight">
+                Mata Pelajaran & Ringkasan Modul
+              </h1>
+              <p className="text-xs md:text-sm text-indigo-900/80 dark:text-indigo-200/70 max-w-xl">
+                Pilih mata kuliah untuk melihat catatan terstruktur, ringkasan AI, susunan bab, kuis mandiri, dan peta konsep.
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 relative z-10 flex-wrap">
               <button
                 onClick={() => setIsFolderModalOpen(true)}
-                className="px-4 py-2.5 bg-dark-800 hover:bg-dark-750 text-slate-200 rounded-xl text-xs font-semibold border border-dark-border flex items-center gap-2 transition-colors"
+                className="px-4 py-2.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-colors shadow-2xs"
               >
-                <Plus className="w-4 h-4 text-purple-400" />
-                <span>Tambah Mata Kuliah</span>
+                <Plus className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span>+ Mata Kuliah</span>
               </button>
 
               <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-950/40 transition-colors"
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Ringkas Materi AI</span>
@@ -1171,7 +1165,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari mata kuliah atau kode matkul..."
-              className="w-full pl-10 pr-4 py-2.5 bg-dark-850 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-2xl text-xs md:text-sm text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 shadow-2xs"
             />
           </div>
 
@@ -1183,31 +1177,31 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 <div
                   key={folder.id}
                   onClick={() => setSelectedFolderId(folder.id)}
-                  className="bg-dark-850 border border-dark-border hover:border-purple-500/50 rounded-2xl p-5 space-y-4 cursor-pointer transition-all hover:shadow-lg hover:shadow-purple-950/20 group"
+                  className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border hover:border-purple-500/50 rounded-3xl p-5 space-y-4 cursor-pointer transition-all hover:shadow-md group"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="p-3 rounded-2xl bg-dark-800 text-purple-400 border border-dark-border group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <div className="p-3 rounded-2xl bg-purple-50 dark:bg-dark-800 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-dark-border group-hover:bg-purple-600 group-hover:text-white transition-colors">
                       <FolderIcon className="w-6 h-6" />
                     </div>
                     {folder.code && (
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-dark-750 text-slate-300 border border-dark-border">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
                         {folder.code}
                       </span>
                     )}
                   </div>
 
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                       {folder.name}
                     </h3>
-                    <p className="text-xs text-slate-400 line-clamp-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                       {folder.description || 'Tidak ada deskripsi mata kuliah.'}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-dark-border/60 text-xs text-slate-400">
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-dark-border/60 text-xs text-slate-400">
                     <span>{count} Materi / Bab</span>
-                    <span className="text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
+                    <span className="text-purple-600 dark:text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
                       Buka Materi →
                     </span>
                   </div>
@@ -1222,17 +1216,17 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="p-2 bg-dark-800 disabled:opacity-30 rounded-xl text-slate-300 border border-dark-border"
+                className="p-2 bg-white dark:bg-dark-800 disabled:opacity-30 rounded-xl text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs text-slate-400 px-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400 px-2">
                 Halaman {currentPage} dari {totalPages}
               </span>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="p-2 bg-dark-800 disabled:opacity-30 rounded-xl text-slate-300 border border-dark-border"
+                className="p-2 bg-white dark:bg-dark-800 disabled:opacity-30 rounded-xl text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-border"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -1244,15 +1238,15 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       {/* 4. MODAL UNGGAH & RINGKAS MATERI BARU */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-900 border border-dark-border rounded-3xl w-full max-w-xl p-6 md:p-8 space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-dark-border pb-4">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-border rounded-3xl w-full max-w-xl p-6 md:p-8 space-y-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-border pb-4">
               <div className="flex items-center gap-2.5">
-                <Sparkles className="w-5 h-5 text-purple-400" />
-                <h3 className="text-lg font-bold text-white">Ringkas Materi & Susun Bab AI</h3>
+                <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Ringkas Materi & Susun Bab AI</h3>
               </div>
               <button
                 onClick={() => setIsUploadModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-dark-800"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1261,13 +1255,13 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
             <div className="space-y-4">
               {/* Folder Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Pilih Mata Kuliah / Folder *
                 </label>
                 <select
                   value={targetFolderId}
                   onChange={(e) => setTargetFolderId(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 >
                   {folders.map(f => (
                     <option key={f.id} value={f.id}>{f.name} {f.code ? `(${f.code})` : ''}</option>
@@ -1277,13 +1271,13 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
               {/* Summary Mode Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Format Ringkasan AI
                 </label>
                 <select
                   value={summaryMode}
                   onChange={(e) => setSummaryMode(e.target.value as SummaryType)}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 >
                   <option value="lengkap">Lengkap & Komprehensif (Rekomendasi)</option>
                   <option value="poin_kunci">Poin-Poin Kunci Saja</option>
@@ -1293,12 +1287,12 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
               </div>
 
               {/* Upload Type Toggle */}
-              <div className="flex rounded-xl bg-dark-800 p-1 border border-dark-border text-xs font-semibold">
+              <div className="flex rounded-2xl bg-slate-100 dark:bg-dark-800 p-1 border border-slate-200 dark:border-dark-border text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setUploadType('file')}
-                  className={`flex-1 py-2 rounded-lg transition-colors ${
-                    uploadType === 'file' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
+                  className={`flex-1 py-2 rounded-xl transition-colors cursor-pointer ${
+                    uploadType === 'file' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Unggah Dokumen (PDF, PPTX, DOCX)
@@ -1306,17 +1300,17 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 <button
                   type="button"
                   onClick={() => setUploadType('text')}
-                  className={`flex-1 py-2 rounded-lg transition-colors ${
-                    uploadType === 'text' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
+                  className={`flex-1 py-2 rounded-xl transition-colors cursor-pointer ${
+                    uploadType === 'text' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Tempel Teks / Catatan Manual
+                  Tempel Catatan Manual
                 </button>
               </div>
 
               {/* Title input */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Judul Materi (Opsional)
                 </label>
                 <input
@@ -1324,19 +1318,19 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
                   placeholder="Contoh: Desain Database Relasional"
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
               {/* File Dropzone or Textarea */}
               {uploadType === 'file' ? (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     File Dokumen Kuliah *
                   </label>
-                  <label className="border-2 border-dashed border-dark-border hover:border-purple-500/60 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-dark-850 transition-colors">
-                    <FileUp className="w-8 h-8 text-purple-400" />
-                    <span className="text-xs font-semibold text-slate-200">
+                  <label className="border-2 border-dashed border-slate-300 dark:border-dark-border hover:border-purple-500/60 rounded-3xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-slate-50 dark:bg-dark-850 transition-colors">
+                    <FileUp className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 text-center">
                       {selectedFile ? selectedFile.name : 'Klik untuk memilih file PDF, PPTX, DOCX, TXT'}
                     </span>
                     <span className="text-[11px] text-slate-400">Maksimal 25 MB</span>
@@ -1352,7 +1346,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                 </div>
               ) : (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Isi Catatan Kuliah *
                   </label>
                   <textarea
@@ -1360,40 +1354,40 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                     value={rawTextInput}
                     onChange={(e) => setRawTextInput(e.target.value)}
                     placeholder="Tempel materi kuliah, slide rangkuman, atau catatan dosen Anda di sini..."
-                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 font-mono leading-relaxed"
+                    className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 font-mono leading-relaxed"
                   />
                 </div>
               )}
 
               {/* Additional Prompt */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Instruksi Tambahan untuk AI <span className="text-slate-500 font-normal">(Opsional)</span>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Instruksi Tambahan untuk AI <span className="text-slate-400 font-normal">(Opsional)</span>
                 </label>
                 <textarea
                   rows={2}
                   value={additionalPrompt}
                   onChange={(e) => setAdditionalPrompt(e.target.value)}
-                  placeholder="Contoh: Fokus ke rumus dan teorema saja. Tambahkan contoh soal di tiap bab. Gunakan bahasa yang lebih sederhana..."
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500 leading-relaxed resize-none"
+                  placeholder="Contoh: Fokus ke rumus dan teorema saja. Tambahkan contoh soal di tiap bab..."
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 leading-relaxed resize-none"
                 />
               </div>
 
               {/* Status or loader */}
               {isSummarizing && (
-                <div className="p-4 bg-purple-950/40 border border-purple-500/30 rounded-2xl flex items-center gap-3 text-xs text-purple-200">
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-400 flex-shrink-0" />
+                <div className="p-4 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-500/30 rounded-2xl flex items-center gap-3 text-xs text-purple-800 dark:text-purple-200">
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400 shrink-0" />
                   <span>{statusMessage || 'Sedang memproses dengan Gemini AI...'}</span>
                 </div>
               )}
 
               {/* Buttons */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-dark-border">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-dark-border">
                 <button
                   type="button"
                   disabled={isSummarizing}
                   onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-300 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold"
                 >
                   Batal
                 </button>
@@ -1401,7 +1395,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   type="button"
                   disabled={isSummarizing}
                   onClick={handleProcessDocument}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-950/40"
+                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 cursor-pointer"
                 >
                   {isSummarizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   <span>Mulai Ringkas & Susun Bab</span>
@@ -1415,12 +1409,12 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       {/* 5. MODAL TAMBAH FOLDER MATA KULIAH */}
       {isFolderModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-900 border border-dark-border rounded-3xl w-full max-w-md p-6 md:p-8 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-dark-border pb-3">
-              <h3 className="text-lg font-bold text-white">Tambah Mata Kuliah Baru</h3>
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-border rounded-3xl w-full max-w-md p-6 md:p-8 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-border pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tambah Mata Kuliah Baru</h3>
               <button
                 onClick={() => setIsFolderModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-dark-800"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1428,7 +1422,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
             <form onSubmit={handleCreateFolder} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Nama Mata Kuliah *
                 </label>
                 <input
@@ -1437,12 +1431,12 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Contoh: Desain Basis Data"
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Kode Mata Kuliah (Opsional)
                 </label>
                 <input
@@ -1450,12 +1444,12 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   value={newFolderCode}
                   onChange={(e) => setNewFolderCode(e.target.value)}
                   placeholder="Contoh: IF2220"
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 uppercase"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 uppercase"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Deskripsi / Topik Utama
                 </label>
                 <input
@@ -1463,21 +1457,21 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   value={newFolderDesc}
                   onChange={(e) => setNewFolderDesc(e.target.value)}
                   placeholder="Contoh: SQL, Relasi, Normalisasi 1NF-3NF"
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-border rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                  className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-dark-border">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-dark-border">
                 <button
                   type="button"
                   onClick={() => setIsFolderModalOpen(false)}
-                  className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-300 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-900/30"
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/30"
                 >
                   Buat Mata Kuliah
                 </button>

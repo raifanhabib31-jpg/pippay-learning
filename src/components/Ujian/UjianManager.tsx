@@ -12,7 +12,8 @@ import {
   Target, 
   ArrowLeft, 
   X, 
-  Loader2 
+  Loader2,
+  GraduationCap
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -114,45 +115,45 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Detail View of a Selected Prediction */}
       {activeItem ? (
         <div className="space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-dark-850 border border-dark-border rounded-2xl p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-5 md:p-6 shadow-xs">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setActiveItem(null)}
-                className="p-2 bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white rounded-xl border border-dark-border transition-colors"
+                className="p-2.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-2xl border border-slate-200 dark:border-dark-border transition-colors"
                 title="Kembali ke Daftar Prediksi"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent-orange/20 text-accent-orange border border-accent-orange/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-orange-100 dark:bg-accent-orange/20 text-accent-orange border border-orange-200 dark:border-accent-orange/30">
                     {folders.find(f => f.id === activeItem.folderId)?.name || 'Mata Kuliah'}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Dibuat {new Date(activeItem.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
-                <h2 className="text-xl font-bold text-white mt-1">{activeItem.title}</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mt-1">{activeItem.title}</h2>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => onStartQuizFromContent(activeItem.fullStudyGuide, activeItem.title)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md shadow-purple-900/30 transition-colors"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md shadow-purple-600/30 transition-colors"
               >
                 <HelpCircle className="w-4 h-4" />
                 <span>Buat Kuis Latihan</span>
               </button>
               <button
                 onClick={handleCopy}
-                className="px-3.5 py-2 bg-dark-800 hover:bg-dark-750 text-slate-200 rounded-xl text-xs font-medium border border-dark-border flex items-center gap-1.5 transition-colors"
+                className="px-3.5 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium border border-slate-200 dark:border-dark-border flex items-center gap-1.5 transition-colors"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-slate-400" />}
                 <span>{copied ? 'Tersalin' : 'Salin'}</span>
               </button>
               <button
@@ -162,7 +163,7 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
                     setActiveItem(null);
                   }
                 }}
-                className="p-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 rounded-xl border border-rose-800/40 transition-colors"
+                className="p-2 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-800/40 transition-colors"
                 title="Hapus"
               >
                 <Trash2 className="w-4 h-4" />
@@ -171,50 +172,50 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
           </div>
 
           {/* Original Input Banner */}
-          <div className="bg-dark-850/80 border border-dark-border rounded-xl p-4">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-white dark:bg-dark-850/80 border border-slate-200 dark:border-dark-border rounded-2xl p-4">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Kisi-kisi Dosen yang Dianalisis:
             </div>
-            <div className="text-xs text-slate-300 font-mono whitespace-pre-wrap bg-dark-900 p-3 rounded-lg border border-dark-border/80">
+            <div className="text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap bg-slate-50 dark:bg-dark-900 p-3 rounded-xl border border-slate-200 dark:border-dark-border/80">
               {activeItem.rawInput}
             </div>
           </div>
 
           {/* Output Tabs */}
-          <div className="bg-dark-850 border border-dark-border rounded-2xl overflow-hidden shadow-sm">
-            <div className="flex border-b border-dark-border bg-dark-900/80 px-4 pt-3 gap-2 overflow-x-auto">
+          <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl overflow-hidden shadow-xs">
+            <div className="flex border-b border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-900/80 px-4 pt-3 gap-2 overflow-x-auto">
               <button
                 onClick={() => setActiveResultTab('guide')}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap ${
                   activeResultTab === 'guide'
-                    ? 'border-accent-orange text-accent-orange bg-dark-850'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-accent-orange text-accent-orange bg-white dark:bg-dark-850 font-bold'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <Brain className="w-4 h-4" />
-                <span>Rangkuman Komprehensif Siap Ujian</span>
+                <span>Rangkuman Siap Ujian</span>
               </button>
               <button
                 onClick={() => setActiveResultTab('matched')}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap ${
                   activeResultTab === 'matched'
-                    ? 'border-purple-400 text-purple-300 bg-dark-850'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-purple-600 text-purple-600 dark:text-purple-300 bg-white dark:bg-dark-850 font-bold'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Materi yang Cocok dari Catatan</span>
+                <span>Materi yang Cocok</span>
               </button>
               <button
                 onClick={() => setActiveResultTab('external')}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-colors whitespace-nowrap ${
                   activeResultTab === 'external'
-                    ? 'border-cyan-400 text-cyan-300 bg-dark-850'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-300 bg-white dark:bg-dark-850 font-bold'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 <Globe className="w-4 h-4" />
-                <span>Materi Tambahan Eksternal AI</span>
+                <span>Materi Tambahan AI</span>
               </button>
             </div>
 
@@ -240,26 +241,32 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
           </div>
         </div>
       ) : (
-        /* Main Prediksi Ujian List View (Pelajarin Style) */
+        /* Main Prediksi Ujian List View */
         <div className="space-y-6">
-          {/* Header Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                Prediksi Soal Ujian
-              </h1>
-              <p className="text-xs text-slate-400 mt-1">
-                Unggah soal ujian atau kisi-kisi dosen, biarkan AI memprediksi soal & materi kunci jawaban.
-              </p>
-            </div>
+          {/* Top Hero Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-orange-100 via-amber-50 to-orange-50 dark:from-[#2e1d14] dark:via-[#221714] dark:to-dark-850 border border-orange-200/80 dark:border-orange-900/30 p-6 md:p-8 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-200/60 dark:bg-orange-500/20 text-orange-900 dark:text-orange-300 border border-orange-300/60 dark:border-orange-500/30">
+                  <GraduationCap className="w-3.5 h-3.5 text-accent-orange" />
+                  <span>Sintesis Kisi-Kisi AI</span>
+                </div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-orange-950 dark:text-orange-100 tracking-tight">
+                  Prediksi Soal & Kisi-Kisi Ujian
+                </h1>
+                <p className="text-xs md:text-sm text-orange-900/80 dark:text-orange-200/70 max-w-xl">
+                  Unggah soal ujian lama atau masukkan kisi-kisi dosen — AI akan mencocokkan materi Anda dan memprediksi soal yang berpotensi keluar.
+                </p>
+              </div>
 
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2.5 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-950/40 transition-all transform active:scale-95 shrink-0"
-            >
-              <Target className="w-4 h-4" />
-              <span>Buat Prediksi</span>
-            </button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-5 py-3 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-950/20 transition-all transform active:scale-95 shrink-0"
+              >
+                <Target className="w-4 h-4" />
+                <span>+ Buat Prediksi Baru</span>
+              </button>
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -270,26 +277,25 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
               placeholder="Cari koleksi atau kisi-kisi ujian..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-dark-850 border border-dark-border rounded-full pl-11 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange transition-colors"
+              className="w-full bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-2xl pl-11 pr-4 py-3 text-xs md:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-accent-orange/40 transition-all shadow-2xs"
             />
           </div>
 
           {/* List or Empty State */}
           {filteredList.length === 0 ? (
-            /* Empty state matching pelajarin.ai screenshot 1 */
-            <div className="border border-dashed border-dark-border/80 rounded-3xl p-12 md:p-16 flex flex-col items-center justify-center text-center space-y-4 bg-dark-900/40">
-              <div className="w-14 h-14 rounded-2xl bg-accent-orange/10 border border-accent-orange/30 flex items-center justify-center text-accent-orange shadow-inner">
-                <Target className="w-7 h-7" />
+            <div className="border border-dashed border-slate-300 dark:border-dark-border/80 rounded-3xl p-12 md:p-16 flex flex-col items-center justify-center text-center space-y-4 bg-white/60 dark:bg-dark-900/40">
+              <div className="w-16 h-16 rounded-3xl bg-orange-100 dark:bg-accent-orange/10 border border-orange-200 dark:border-accent-orange/30 flex items-center justify-center text-accent-orange shadow-inner">
+                <Target className="w-8 h-8" />
               </div>
               <div className="space-y-1.5 max-w-md">
-                <h3 className="text-base font-bold text-white">Belum ada prediksi ujian</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Belum Ada Prediksi Ujian</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   Unggah soal ujian lama atau masukkan kisi-kisi dosen — AI akan memprediksi soal yang mungkin keluar lengkap dengan materi & kunci jawaban.
                 </p>
               </div>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="mt-2 px-5 py-2.5 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-orange-950/40 transition-all transform active:scale-95"
+                className="mt-2 px-5 py-2.5 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-orange-950/30 transition-all transform active:scale-95"
               >
                 <Target className="w-4 h-4" />
                 <span>Buat Prediksi Pertama</span>
@@ -303,27 +309,27 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
                   <div
                     key={item.id}
                     onClick={() => setActiveItem(item)}
-                    className="bg-dark-850 hover:bg-dark-800 border border-dark-border hover:border-accent-orange/60 rounded-2xl p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between group shadow-sm hover:shadow-lg hover:shadow-orange-950/20"
+                    className="bg-white dark:bg-dark-850 hover:bg-slate-50 dark:hover:bg-dark-800 border border-slate-200 dark:border-dark-border hover:border-accent-orange/60 rounded-3xl p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between group shadow-xs hover:shadow-md"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-accent-orange/15 text-accent-orange border border-accent-orange/20">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-orange-100 dark:bg-accent-orange/15 text-accent-orange border border-orange-200 dark:border-accent-orange/20">
                           {folder?.name || 'Mata Kuliah'}
                         </span>
                         <span className="text-[11px] text-slate-400">
                           {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                         </span>
                       </div>
-                      <h3 className="text-sm font-bold text-white group-hover:text-accent-orange transition-colors line-clamp-2">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-accent-orange transition-colors line-clamp-2">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-slate-400 line-clamp-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                         {item.rawInput}
                       </p>
                     </div>
 
-                    <div className="pt-4 mt-3 border-t border-dark-border flex items-center justify-between text-xs">
-                      <span className="text-purple-300 font-medium text-[11px] flex items-center gap-1">
+                    <div className="pt-4 mt-3 border-t border-slate-100 dark:border-dark-border flex items-center justify-between text-xs">
+                      <span className="text-purple-600 dark:text-purple-300 font-medium text-[11px] flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         AI Study Guide
                       </span>
@@ -342,20 +348,20 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
       {/* Modal: Buat Prediksi Soal Ujian */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-dark-850 border border-dark-border rounded-2xl max-w-xl w-full p-6 text-slate-100 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-dark-border pb-3">
+          <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl max-w-xl w-full p-6 text-slate-800 dark:text-slate-100 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-border pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-accent-orange/20 border border-accent-orange/30 flex items-center justify-center text-accent-orange">
+                <div className="w-9 h-9 rounded-2xl bg-orange-100 dark:bg-accent-orange/20 border border-orange-200 dark:border-accent-orange/30 flex items-center justify-center text-accent-orange">
                   <Target className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-white">Buat Prediksi Soal Ujian</h3>
-                  <p className="text-[11px] text-slate-400">Sintesis kisi-kisi dosen dengan materi catatan & AI</p>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Buat Prediksi Soal Ujian</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Sintesis kisi-kisi dosen dengan materi catatan & AI</p>
                 </div>
               </div>
               <button
                 onClick={() => !isAnalyzing && setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-dark-750"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-750"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -364,13 +370,13 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
             <div className="space-y-4 text-xs">
               {/* Mata Kuliah */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                   Pilih Mata Kuliah Terkait
                 </label>
                 <select
                   value={selectedFolderId}
                   onChange={(e) => setSelectedFolderId(e.target.value)}
-                  className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-accent-orange"
+                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-accent-orange/40"
                 >
                   {folders.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -378,14 +384,14 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                   AI akan mencari dari {relatedNotes.length} materi yang tersimpan di mata kuliah ini.
                 </p>
               </div>
 
               {/* Judul Ujian */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                   Judul Prediksi / Ujian (Opsional)
                 </label>
                 <input
@@ -393,13 +399,13 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
                   placeholder="Contoh: Kisi-Kisi UTS Semester 4 / Prediksi UAS"
                   value={examTitle}
                   onChange={(e) => setExamTitle(e.target.value)}
-                  className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange"
+                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-accent-orange/40"
                 />
               </div>
 
               {/* Input Kisi-Kisi */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
                   Kisi-Kisi atau Topik Ujian dari Dosen
                 </label>
                 <textarea
@@ -407,23 +413,23 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
                   placeholder="Contoh:&#10;1. Normalisasi database (1NF sampai 3NF)&#10;2. Perbedaan inner join, left join, full outer join&#10;3. Soal hitungan indexing B-Tree&#10;4. Konsep ACID transaction"
                   value={kisiKisiInput}
                   onChange={(e) => setKisiKisiInput(e.target.value)}
-                  className="w-full bg-dark-800 border border-dark-border rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange font-mono"
+                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-accent-orange/40 font-mono"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-dark-border">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-dark-border">
               <button
                 onClick={() => setIsModalOpen(false)}
                 disabled={isAnalyzing}
-                className="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-slate-300 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="px-5 py-2 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-orange-950/40 transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-orange-950/20 transition-colors disabled:opacity-50"
               >
                 {isAnalyzing ? (
                   <>
