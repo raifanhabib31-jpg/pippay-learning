@@ -147,4 +147,15 @@ export interface AppSettings {
   emailJsPublicKey?: string;
 }
 
+export interface UserProfile {
+  id: string; // Google sub ID or unique ID
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  university?: string;
+  major?: string;
+  provider: 'google' | 'email';
+  createdAt: string;
+}
+
 export type TabType = 'dashboard' | 'materi' | 'ujian' | 'latihan' | 'jadwal' | 'pengaturan';

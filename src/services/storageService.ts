@@ -9,6 +9,8 @@ import type {
   DailyGradeItem 
 } from '../types';
 
+import { authService } from './authService';
+
 const STORAGE_KEYS = {
   FOLDERS: 'pippay_folders',
   MATERI: 'pippay_materi',
@@ -19,6 +21,12 @@ const STORAGE_KEYS = {
   SEMESTERS: 'pippay_semesters_1_10',
   DAILY_GRADES: 'pippay_daily_grades',
 };
+
+function getUserKey(baseKey: string): string {
+  const user = authService.getCurrentUser();
+  if (!user || !user.id) return baseKey;
+  return `${baseKey}_${user.id}`;
+}
 
 const DEFAULT_FOLDERS: Folder[] = [
   {
@@ -384,7 +392,8 @@ function syncToServer(jadwal: Jadwal[], settings: AppSettings) {
 
 export const storageService = {
   getFolders(): Folder[] {
-    const data = localStorage.getItem(STORAGE_KEYS.FOLDERS);
+    const key = getUserKey(STORAGE_KEYS.FOLDERS);
+    const data = localStorage.getItem(key);
     if (!data) {
       this.saveFolders(DEFAULT_FOLDERS);
       return DEFAULT_FOLDERS;
@@ -393,11 +402,13 @@ export const storageService = {
   },
 
   saveFolders(folders: Folder[]) {
-    localStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(folders));
+    const key = getUserKey(STORAGE_KEYS.FOLDERS);
+    localStorage.setItem(key, JSON.stringify(folders));
   },
 
   getMateri(): Materi[] {
-    const data = localStorage.getItem(STORAGE_KEYS.MATERI);
+    const key = getUserKey(STORAGE_KEYS.MATERI);
+    const data = localStorage.getItem(key);
     if (!data) {
       this.saveMateri(DEFAULT_MATERI);
       return DEFAULT_MATERI;
@@ -406,29 +417,35 @@ export const storageService = {
   },
 
   saveMateri(materi: Materi[]) {
-    localStorage.setItem(STORAGE_KEYS.MATERI, JSON.stringify(materi));
+    const key = getUserKey(STORAGE_KEYS.MATERI);
+    localStorage.setItem(key, JSON.stringify(materi));
   },
 
   getKisiKisi(): KisiKisiItem[] {
-    const data = localStorage.getItem(STORAGE_KEYS.KISIKISI);
+    const key = getUserKey(STORAGE_KEYS.KISIKISI);
+    const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   },
 
   saveKisiKisi(items: KisiKisiItem[]) {
-    localStorage.setItem(STORAGE_KEYS.KISIKISI, JSON.stringify(items));
+    const key = getUserKey(STORAGE_KEYS.KISIKISI);
+    localStorage.setItem(key, JSON.stringify(items));
   },
 
   getQuizResults(): QuizResult[] {
-    const data = localStorage.getItem(STORAGE_KEYS.QUIZ_RESULTS);
+    const key = getUserKey(STORAGE_KEYS.QUIZ_RESULTS);
+    const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   },
 
   saveQuizResults(results: QuizResult[]) {
-    localStorage.setItem(STORAGE_KEYS.QUIZ_RESULTS, JSON.stringify(results));
+    const key = getUserKey(STORAGE_KEYS.QUIZ_RESULTS);
+    localStorage.setItem(key, JSON.stringify(results));
   },
 
   getJadwal(): Jadwal[] {
-    const data = localStorage.getItem(STORAGE_KEYS.JADWAL);
+    const key = getUserKey(STORAGE_KEYS.JADWAL);
+    const data = localStorage.getItem(key);
     if (!data) {
       this.saveJadwal(DEFAULT_JADWAL);
       return DEFAULT_JADWAL;
@@ -437,14 +454,16 @@ export const storageService = {
   },
 
   saveJadwal(jadwal: Jadwal[]) {
-    localStorage.setItem(STORAGE_KEYS.JADWAL, JSON.stringify(jadwal));
+    const key = getUserKey(STORAGE_KEYS.JADWAL);
+    localStorage.setItem(key, JSON.stringify(jadwal));
     // Sync to server so scheduled H-1 reminder can access latest data
     const settings = this.getSettings();
     syncToServer(jadwal, settings);
   },
 
   getSemesters(): SemesterRecord[] {
-    const data = localStorage.getItem(STORAGE_KEYS.SEMESTERS);
+    const key = getUserKey(STORAGE_KEYS.SEMESTERS);
+    const data = localStorage.getItem(key);
     if (!data) {
       this.saveSemesters(DEFAULT_SEMESTERS);
       return DEFAULT_SEMESTERS;
@@ -453,11 +472,13 @@ export const storageService = {
   },
 
   saveSemesters(semesters: SemesterRecord[]) {
-    localStorage.setItem(STORAGE_KEYS.SEMESTERS, JSON.stringify(semesters));
+    const key = getUserKey(STORAGE_KEYS.SEMESTERS);
+    localStorage.setItem(key, JSON.stringify(semesters));
   },
 
   getDailyGrades(): DailyGradeItem[] {
-    const data = localStorage.getItem(STORAGE_KEYS.DAILY_GRADES);
+    const key = getUserKey(STORAGE_KEYS.DAILY_GRADES);
+    const data = localStorage.getItem(key);
     if (!data) {
       this.saveDailyGrades(DEFAULT_DAILY_GRADES);
       return DEFAULT_DAILY_GRADES;
@@ -466,14 +487,25 @@ export const storageService = {
   },
 
   saveDailyGrades(grades: DailyGradeItem[]) {
-    localStorage.setItem(STORAGE_KEYS.DAILY_GRADES, JSON.stringify(grades));
+    const key = getUserKey(STORAGE_KEYS.DAILY_GRADES);
+    localStorage.setItem(key, JSON.stringify(grades));
   },
 
   getSettings(): AppSettings {
-    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    const key = getUserKey(STORAGE_KEYS.SETTINGS);
+    const data = localStorage.getItem(key);
+    const currentUser = authService.getCurrentUser();
+
+    const baseDefaults: AppSettings = {
+      ...DEFAULT_SETTINGS,
+      userName: currentUser?.name || DEFAULT_SETTINGS.userName,
+      userEmail: currentUser?.email || DEFAULT_SETTINGS.userEmail,
+      userUniversity: currentUser?.university || DEFAULT_SETTINGS.userUniversity,
+    };
+
     if (!data) {
-      this.saveSettings(DEFAULT_SETTINGS);
-      return DEFAULT_SETTINGS;
+      this.saveSettings(baseDefaults);
+      return baseDefaults;
     }
     const parsed = JSON.parse(data);
     if (!parsed.resendApiKey) {
@@ -482,14 +514,15 @@ export const storageService = {
     if (!parsed.resendSenderEmail) {
       parsed.resendSenderEmail = DEFAULT_SETTINGS.resendSenderEmail;
     }
-    if (!parsed.userEmail) {
-      parsed.userEmail = DEFAULT_SETTINGS.userEmail;
+    if (!parsed.userEmail && currentUser?.email) {
+      parsed.userEmail = currentUser.email;
     }
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return { ...baseDefaults, ...parsed };
   },
 
   saveSettings(settings: AppSettings) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    const key = getUserKey(STORAGE_KEYS.SETTINGS);
+    localStorage.setItem(key, JSON.stringify(settings));
     // Sync to server so scheduled reminder has latest API key + email
     const jadwal = this.getJadwal();
     syncToServer(jadwal, settings);

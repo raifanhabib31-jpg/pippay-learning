@@ -14,7 +14,7 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-import type { TabType } from '../types';
+import type { TabType, UserProfile } from '../types';
 
 interface NavigationProps {
   activeTab: TabType;
@@ -25,6 +25,8 @@ interface NavigationProps {
   totalUjian: number;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
+  onLogout?: () => void;
+  currentUser?: UserProfile | null;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -36,6 +38,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   totalUjian,
   theme,
   toggleTheme,
+  onLogout,
+  currentUser,
 }) => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
@@ -92,12 +96,12 @@ export const Navigation: React.FC<NavigationProps> = ({
         
         {/* Top Logo / Avatar Badge */}
         <div className="flex flex-col items-center group cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-          <div className="relative w-12 h-12 rounded-2xl bg-white dark:bg-dark-800 border border-purple-100 dark:border-purple-500/20 shadow-sm flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md group-hover:border-purple-300">
-            {/* Mascot / App Logo */}
+          <div className="relative flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+            {/* Mascot / App Logo - bigger, no border */}
             <img 
               src="/logo.png" 
               alt="PippayLearning Mascot" 
-              className="w-8 h-8 object-contain"
+              className="w-14 h-14 lg:w-16 lg:h-16 object-contain drop-shadow-lg"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = 'none';
               }}
@@ -173,6 +177,35 @@ export const Navigation: React.FC<NavigationProps> = ({
         {/* Bottom Utility Actions (Theme Toggle, Help, API Key, Exit) */}
         <div className="flex flex-col items-center space-y-4 w-full pt-4 border-t border-slate-100 dark:border-dark-border">
           
+          {/* User Avatar Badge */}
+          {currentUser && (
+            <div className="relative group cursor-default" title={currentUser.name}>
+              <div className="w-9 h-9 rounded-2xl overflow-hidden border-2 border-purple-200 dark:border-purple-500/40 shadow-sm ring-2 ring-transparent group-hover:ring-purple-400/40 transition-all duration-200">
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-purple-600 text-white font-bold text-sm flex items-center justify-center">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              {/* Online indicator */}
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-dark-900" />
+              {/* Name tooltip */}
+              <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-[11px] font-medium rounded-lg shadow-lg whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <div className="font-bold">{currentUser.name}</div>
+                <div className="text-slate-400 text-[10px]">{currentUser.email}</div>
+              </div>
+            </div>
+          )}
+          
           {/* Gemini API Key Status Indicator */}
           <button
             onClick={() => setActiveTab('pengaturan')}
@@ -211,9 +244,17 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Exit / Sign Out Icon (As shown at bottom of reference image) */}
           <button
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => {
+              if (onLogout) {
+                if (window.confirm('Apakah Anda yakin ingin keluar dari sesi belajar ini?')) {
+                  onLogout();
+                }
+              } else {
+                setActiveTab('dashboard');
+              }
+            }}
             className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-dark-800 transition-all duration-200"
-            title="Beranda / Reset Navigasi"
+            title="Keluar / Logout Akun"
           >
             <LogOut className="w-4 h-4 stroke-[1.75]" />
           </button>

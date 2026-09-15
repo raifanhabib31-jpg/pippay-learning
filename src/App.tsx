@@ -8,11 +8,14 @@ import type {
   AppSettings, 
   TabType,
   SemesterRecord,
-  DailyGradeItem
+  DailyGradeItem,
+  UserProfile
 } from './types';
 import { storageService } from './services/storageService';
 import { emailService } from './services/emailService';
 import type { SendEmailResult } from './services/emailService';
+import { authService } from './services/authService';
+import { LoginPage } from './components/Auth/LoginPage';
 import { Navigation } from './components/Navigation';
 import { Dashboard } from './components/Dashboard';
 import { MateriManager } from './components/Materi/MateriManager';
@@ -24,6 +27,11 @@ import { CheckCircle2, X } from 'lucide-react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(
+    () => authService.getCurrentUser()
+  );
   
   // Theme state: default dark mode as requested by user comparing to pelajarin.ai
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -80,9 +88,32 @@ export function App() {
     setSettings(storageService.getSettings());
   };
 
+  // Load data when user logs in
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser) {
+      loadData();
+    }
+  }, [currentUser]);
+
+  // Auth handlers
+  const handleLoginSuccess = (user: UserProfile) => {
+    setCurrentUser(user);
+    setActiveTab('dashboard');
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+    // Clear app state
+    setFolders([]);
+    setMateri([]);
+    setKisiKisiList([]);
+    setQuizResults([]);
+    setJadwalList([]);
+    setSemesters([]);
+    setDailyGrades([]);
+    setActiveTab('dashboard');
+  };
 
   // Auto H-1 reminder: runs once when jadwalList is first loaded
   const [h1CheckDone, setH1CheckDone] = useState(false);
@@ -233,6 +264,17 @@ export function App() {
     pengaturan: 'Pengaturan'
   };
 
+  // Show Login Page if not authenticated
+  if (!currentUser) {
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    );
+  }
+
   return (
     <div className={`flex min-h-screen ${theme === 'dark' ? 'bg-dark-900 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
       {/* Fixed Pelajarin-style Sidebar with Mascot Logo */}
@@ -245,6 +287,8 @@ export function App() {
         totalUjian={upcomingExamsCount}
         theme={theme}
         toggleTheme={toggleTheme}
+        onLogout={handleLogout}
+        currentUser={currentUser}
       />
 
       {/* Main Content Area */}
@@ -252,11 +296,11 @@ export function App() {
         {/* Top Header */}
         <header className="bg-white/90 dark:bg-dark-900/90 backdrop-blur-md border-b border-slate-200 dark:border-dark-border px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2.5">
-            <div className="md:hidden w-8 h-8 rounded-xl bg-purple-50 dark:bg-dark-800 border border-purple-300 dark:border-purple-500/40 p-0.5 flex items-center justify-center shrink-0">
+            <div className="md:hidden shrink-0">
               <img 
                 src="/logo.png" 
                 alt="Logo" 
-                className="w-full h-full object-contain"
+                className="w-9 h-9 object-contain drop-shadow-md"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}
@@ -274,15 +318,7 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-slate-800 dark:text-white flex items-center justify-end gap-1.5">
-                <span>{settings.userName || 'Alex Pratama'}</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.2 bg-accent-orange/20 text-accent-orange rounded border border-accent-orange/30">
-                  {settings.userTitle || 'Mahasiswa'}
-                </span>
-              </div>
-              <div className="text-[11px] text-purple-600 dark:text-purple-300">{settings.userUniversity || settings.userEmail || 'Mode Lokal'}</div>
-            </div>
+            {/* Minimalist clean header without user badge */}
           </div>
         </header>
 
