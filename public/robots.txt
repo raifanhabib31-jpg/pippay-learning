@@ -1,0 +1,3 @@
+# Block all search engines from crawling or indexing any part of this site
+User-agent: *
+Disallow: /
