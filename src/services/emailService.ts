@@ -43,48 +43,20 @@ async function sendViaResendEndpoint(
 ): Promise<{ success: boolean; message: string }> {
   const safeSender = formatResendSender(from);
 
-  // Try Netlify serverless proxy first (bypasses CORS restrictions)
-  try {
-    const netlifyRes = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey, from: safeSender, to, subject, html, text })
-    });
-
-    if (netlifyRes.ok) {
-      return { success: true, message: 'Berhasil dikirim via Resend serverless function.' };
-    }
-
-    const netlifyErr = await netlifyRes.json().catch(() => ({}));
-    if (netlifyRes.status !== 404 && netlifyRes.status !== 405) {
-      throw new Error(netlifyErr.message || `HTTP ${netlifyRes.status}`);
-    }
-  } catch (proxyError: any) {
-    console.warn('Proxy route failed, trying direct endpoint:', proxyError);
-  }
-
-  // Fallback: Direct Resend API
-  const directRes = await fetch('https://api.resend.com/emails', {
+  // Use server-side proxy (/api/send-email Cloudflare Pages Function)
+  // This avoids CORS restrictions that block direct browser→resend.com calls.
+  const res = await fetch('/api/send-email', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey.trim()}`
-    },
-    body: JSON.stringify({
-      from,
-      to: [to],
-      subject,
-      html,
-      text
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey, from: safeSender, to, subject, html, text })
   });
 
-  if (!directRes.ok) {
-    const errData = await directRes.json().catch(() => ({}));
-    throw new Error(errData.message || `HTTP ${directRes.status}: ${directRes.statusText}`);
+  if (res.ok) {
+    return { success: true, message: 'Email berhasil dikirim via Resend.' };
   }
 
-  return { success: true, message: 'Berhasil dikirim via Resend Direct API.' };
+  const errData = await res.json().catch(() => ({})) as Record<string, string>;
+  throw new Error(errData.message || `HTTP ${res.status}`);
 }
 
 export const emailService = {
