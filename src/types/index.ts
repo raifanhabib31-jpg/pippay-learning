@@ -134,6 +134,9 @@ export interface AppSettings {
   userUniversity?: string; // contoh: "Universitas Indonesia"
   userBio?: string;
   userEmail: string;
+  emailProvider?: 'resend' | 'emailjs' | 'simulation';
+  resendApiKey?: string;
+  resendSenderEmail?: string;
   emailJsServiceId?: string;
   emailJsTemplateId?: string;
   emailJsPublicKey?: string;

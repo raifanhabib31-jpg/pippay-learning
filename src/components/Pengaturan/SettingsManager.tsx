@@ -10,10 +10,13 @@ import {
   Key, 
   User, 
   Loader2, 
-  Award 
+  Award,
+  Mail,
+  Send
 } from 'lucide-react';
 import type { AppSettings } from '../../types';
 import { storageService } from '../../services/storageService';
+import { emailService } from '../../services/emailService';
 
 interface SettingsManagerProps {
   settings: AppSettings;
@@ -28,9 +31,14 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
 }) => {
   const [formData, setFormData] = useState<AppSettings>(settings);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showResendKey, setShowResendKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [emailTestStatus, setEmailTestStatus] = useState<string | null>(null);
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+  const [showEmailJsConfig, setShowEmailJsConfig] = useState(false);
+
   const [isCustomModel, setIsCustomModel] = useState(
     !['gemini-3.1-pro', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'].includes(formData.geminiModel)
   );
@@ -78,6 +86,29 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     }
   };
 
+  const handleTestResendEmail = async () => {
+    if (!formData.resendApiKey?.trim()) {
+      setEmailTestStatus('Masukkan Resend API Key terlebih dahulu.');
+      return;
+    }
+    if (!formData.userEmail?.trim()) {
+      setEmailTestStatus('Masukkan Alamat Email Pengguna terlebih dahulu.');
+      return;
+    }
+
+    setIsTestingEmail(true);
+    setEmailTestStatus(null);
+
+    const res = await emailService.testResendApiKey(
+      formData.resendApiKey,
+      formData.userEmail,
+      formData.resendSenderEmail
+    );
+
+    setEmailTestStatus(res.message);
+    setIsTestingEmail(false);
+  };
+
   const handleExportData = () => {
     const jsonStr = storageService.exportAllData();
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -100,7 +131,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
         alert('Data berhasil diimpor!');
         onRefreshData();
       } else {
-        alert('Format file cadangan tidak valid.');
+        alert('Gagal mengimpor file. Pastikan format JSON sesuai.');
       }
     };
     reader.readAsText(file);
@@ -108,107 +139,84 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Pengaturan & Kustomisasi Profil
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Personalisasi profil akademik, konfigurasi model Google Gemini AI, dan kelola cadangan data.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-extrabold text-white tracking-tight">Pengaturan & Konfigurasi API</h1>
+        <p className="text-xs text-slate-400 mt-1">
+          Kelola profil Mahasiswa Berprestasi, Gemini AI Key, Resend Email API, dan pencadangan data lokal.
+        </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* Section 1: Profil Mahasiswa & Kustomisasi Status */}
+        {/* Section 1: Profil Mahasiswa */}
         <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-dark-border">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-accent-orange/20 border border-accent-orange/30 flex items-center justify-center text-accent-orange">
-                <User className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-white">Profil & Gelar Pengguna</h3>
-                <p className="text-[11px] text-purple-300">Ubah nama, status, dan target prestasi Anda</p>
-              </div>
+          <div className="flex items-center gap-2.5 pb-3 border-b border-dark-border">
+            <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <User className="w-4 h-4" />
             </div>
-
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-accent-orange/15 text-accent-orange border border-accent-orange/30 flex items-center gap-1">
-              <Award className="w-3.5 h-3.5" />
-              <span>{formData.userTitle || 'Mahasiswa Berprestasi'}</span>
-            </span>
+            <div>
+              <h3 className="font-bold text-sm text-white">Profil & Gelar Prestasi Mahasiswa</h3>
+              <p className="text-[11px] text-slate-400">Sesuaikan nama, predikat pencapaian, dan universitas Anda</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="block text-slate-300 font-semibold mb-1.5">
-                Nama Lengkap / Panggilan *
+                Nama Mahasiswa *
               </label>
               <input
                 type="text"
-                placeholder="Contoh: Alex Pratama"
+                required
                 value={formData.userName}
                 onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
-                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange"
-                required
+                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">
-                Status / Gelar Profil (Custom)
+              <label className="block text-slate-300 font-semibold mb-1.5 flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-amber-400" />
+                <span>Gelar / Status Prestasi</span>
               </label>
               <input
                 type="text"
-                placeholder="Contoh: Mahasiswa Berprestasi / Juara Hackathon"
-                value={formData.userTitle || ''}
+                placeholder="Contoh: Mahasiswa Berprestasi Utama"
+                value={formData.userTitle || 'Mahasiswa Berprestasi'}
                 onChange={(e) => setFormData({ ...formData, userTitle: e.target.value })}
-                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange font-medium"
+                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 font-medium"
               />
-              <div className="flex gap-1.5 mt-2 flex-wrap">
-                {['Mahasiswa Berprestasi', 'Juara Hackathon', 'Calon Cumlaude', 'Ketua Organisasi', 'Riset AI Lead'].map(preset => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, userTitle: preset })}
-                    className="text-[10px] px-2 py-0.5 rounded-md bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-dark-border transition-colors"
-                  >
-                    + {preset}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div>
               <label className="block text-slate-300 font-semibold mb-1.5">
-                Universitas / Jurusan / Fakultas
+                Universitas / Institut
               </label>
               <input
                 type="text"
-                placeholder="Contoh: Ilmu Komputer - Universitas Indonesia"
+                placeholder="Contoh: Institut Teknologi Bandung"
                 value={formData.userUniversity || ''}
                 onChange={(e) => setFormData({ ...formData, userUniversity: e.target.value })}
-                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange"
+                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500"
               />
             </div>
 
             <div>
               <label className="block text-slate-300 font-semibold mb-1.5">
-                Email Utama Penerima Pengingat
+                Alamat Email Pengguna (Tujuan Notifikasi Jadwal) *
               </label>
               <input
                 type="email"
+                required
                 placeholder="nama@kampus.ac.id"
                 value={formData.userEmail}
                 onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
-                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange"
+                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1.5">
+            <label className="block text-slate-300 font-semibold mb-1.5 text-xs">
               Bio / Target & Motto Belajar
             </label>
             <input
@@ -216,7 +224,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
               placeholder="Contoh: Fokus IPK 3.85+, aktif riset AI & submit 3 kompetisi nasional semester ini."
               value={formData.userBio || ''}
               onChange={(e) => setFormData({ ...formData, userBio: e.target.value })}
-              className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent-orange"
+              className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500"
             />
           </div>
         </div>
@@ -229,15 +237,15 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                 <Key className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-white">Google Gemini AI Engine (Dukungan Gemini Plus / Pro / Flash)</h3>
-                <p className="text-[11px] text-purple-300 font-medium">Mendukung semua versi model Gemini dari Google AI Studio & Gemini Plus</p>
+                <h3 className="font-bold text-sm text-white">Google Gemini AI Engine</h3>
+                <p className="text-[11px] text-purple-300 font-medium">Mendukung semua model Gemini (Gemini 3.1 Pro, 3.6 Flash, 3.5 Flash Lite, 2.5, 1.5)</p>
               </div>
             </div>
             <a
               href="https://aistudio.google.com/app/apikey"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-accent-orange hover:underline flex items-center gap-1 font-semibold"
+              className="text-xs text-purple-400 hover:text-purple-300 hover:underline flex items-center gap-1 font-semibold"
             >
               <span>Dapatkan API Key Gratis</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -324,14 +332,11 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: gemini-3.1-pro, gemini-3.6-flash, gemini-3.5-flash-lite, atau fine-tuned model"
+                    placeholder="Contoh: gemini-3.1-pro, gemini-3.6-flash, gemini-3.5-flash-lite"
                     value={formData.geminiModel}
                     onChange={(e) => setFormData({ ...formData, geminiModel: e.target.value.trim() })}
                     className="w-full bg-dark-800 border border-dark-border rounded-lg px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-purple-500"
                   />
-                  <p className="text-[10px] text-slate-400">
-                    Sistem akan memanggil API Google Gemini menggunakan model ID yang Anda masukkan di atas.
-                  </p>
                 </div>
               )}
             </div>
@@ -348,7 +353,143 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
           </div>
         </div>
 
-        {/* Section 3: Cadangan Data */}
+        {/* Section 3: Resend Email API & Notifikasi */}
+        <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-dark-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Resend Email API (Pengiriman Email Otomatis)</h3>
+                <p className="text-[11px] text-slate-400">Kirim notifikasi jadwal kuliah & deadline langsung ke inbox email Anda</p>
+              </div>
+            </div>
+            <a
+              href="https://resend.com/api-keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 font-semibold"
+            >
+              <span>Dapatkan Resend API Key</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="space-y-4 text-xs">
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1.5">
+                Resend API Key (re_...)
+              </label>
+              <div className="relative">
+                <input
+                  type={showResendKey ? 'text' : 'password'}
+                  placeholder="re_123456789abcdef..."
+                  value={formData.resendApiKey || ''}
+                  onChange={(e) => setFormData({ ...formData, resendApiKey: e.target.value.trim() })}
+                  className="w-full bg-dark-800 border border-dark-border rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResendKey(!showResendKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  {showResendKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Dapatkan API Key di <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">resend.com/api-keys</a> (Gratis 3.000 email/bulan).
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1.5">
+                Email Pengirim (Sender Email)
+              </label>
+              <input
+                type="text"
+                placeholder="PippayLearning <onboarding@resend.dev>"
+                value={formData.resendSenderEmail || ''}
+                onChange={(e) => setFormData({ ...formData, resendSenderEmail: e.target.value })}
+                className="w-full bg-dark-800 border border-dark-border rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Gunakan default <code className="text-emerald-400 font-mono">PippayLearning &lt;onboarding@resend.dev&gt;</code> untuk testing, atau gunakan domain email Anda sendiri.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleTestResendEmail}
+                disabled={isTestingEmail || !formData.resendApiKey}
+                className="px-4 py-2.5 bg-dark-800 hover:bg-dark-750 text-slate-200 rounded-xl font-semibold border border-dark-border flex items-center gap-2 transition-colors disabled:opacity-40 text-xs"
+              >
+                {isTestingEmail ? <Loader2 className="w-4 h-4 animate-spin text-emerald-400" /> : <Send className="w-4 h-4 text-emerald-400" />}
+                <span>Tes Kirim Email ke {formData.userEmail || 'Email Anda'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEmailJsConfig(!showEmailJsConfig)}
+                className="text-xs text-slate-400 hover:text-white underline"
+              >
+                {showEmailJsConfig ? 'Sembunyikan Opsi EmailJS' : 'Gunakan Alternatif EmailJS'}
+              </button>
+            </div>
+
+            {emailTestStatus && (
+              <div className={`p-3 rounded-xl border text-xs ${
+                emailTestStatus.includes('berhasil') || emailTestStatus.includes('Berhasil')
+                  ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' 
+                  : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+              }`}>
+                {emailTestStatus}
+              </div>
+            )}
+
+            {/* EmailJS Alternative Form */}
+            {showEmailJsConfig && (
+              <div className="p-4 bg-dark-900 border border-dark-border rounded-2xl space-y-3 pt-4 mt-3">
+                <h4 className="text-xs font-bold text-white">Konfigurasi Alternatif: EmailJS</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] text-slate-300 font-semibold mb-1">Service ID</label>
+                    <input
+                      type="text"
+                      placeholder="service_xxx"
+                      value={formData.emailJsServiceId || ''}
+                      onChange={(e) => setFormData({ ...formData, emailJsServiceId: e.target.value })}
+                      className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-slate-300 font-semibold mb-1">Template ID</label>
+                    <input
+                      type="text"
+                      placeholder="template_xxx"
+                      value={formData.emailJsTemplateId || ''}
+                      onChange={(e) => setFormData({ ...formData, emailJsTemplateId: e.target.value })}
+                      className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-slate-300 font-semibold mb-1">Public Key</label>
+                    <input
+                      type="text"
+                      placeholder="public_xxx"
+                      value={formData.emailJsPublicKey || ''}
+                      onChange={(e) => setFormData({ ...formData, emailJsPublicKey: e.target.value })}
+                      className="w-full bg-dark-800 border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-200 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Section 4: Cadangan Data */}
         <div className="bg-dark-850 border border-dark-border rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-dark-border">
             <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
@@ -396,7 +537,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
 
           <button
             type="submit"
-            className="px-6 py-2.5 bg-accent-orange hover:bg-accent-orangeHover text-white font-bold rounded-xl text-xs shadow-lg shadow-orange-950/40 transition-all transform active:scale-95"
+            className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-purple-950/40 transition-all transform active:scale-95"
           >
             Simpan Perubahan
           </button>
