@@ -26,13 +26,13 @@ function decodeJwtResponse(token: string): any {
 
 export const authService = {
   /**
-   * Dapatkan Google OAuth Client ID dari localStorage atau Vite env
+   * Dapatkan Google OAuth Client ID dari localStorage atau Vite env atau default
    */
   getGoogleClientId(): string {
     return (
       localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID) ||
       (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) ||
-      ''
+      '443739960849-jsjptvqpmdn4urn6lhnpa3s2cc1i3er7.apps.googleusercontent.com'
     );
   },
 
