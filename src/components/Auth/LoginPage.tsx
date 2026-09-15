@@ -72,18 +72,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     const targetEmail = optionalEmail || emailInput;
     const clientId = authService.getGoogleClientId();
 
-    if (clientId) {
-      // Redirect langsung ke laman resmi Google Sign In (accounts.google.com)
-      setIsLoading(true);
-      const redirected = authService.redirectToGoogleOAuth(targetEmail);
-      if (!redirected) {
-        setIsLoading(false);
-        setIsClientIdModalOpen(true);
-      }
-    } else {
-      // Jika belum diset Google Client ID, buka dialog setup & instant login
+    if (!clientId) {
       setIsClientIdModalOpen(true);
+      return;
     }
+
+    setIsLoading(true);
+
+    // Coba login via Google Identity Services Popup resmi (sangat stabil & tidak error redirect_uri)
+    authService.loginWithGooglePopup(
+      (user) => {
+        setIsLoading(false);
+        onLoginSuccess(user);
+      },
+      (err) => {
+        console.warn('Google Popup fallback to redirect:', err);
+        // Jika popup diblokir / gagal, redirect langsung ke Google OAuth
+        const redirected = authService.redirectToGoogleOAuth(targetEmail);
+        if (!redirected) {
+          setIsLoading(false);
+          setIsClientIdModalOpen(true);
+        }
+      }
+    );
   };
 
   // Form submit handler

@@ -52,7 +52,8 @@ export const authService = {
       return false; // Memerlukan Client ID
     }
 
-    const redirectUri = window.location.origin + window.location.pathname;
+    // Normalize redirect URI to exact origin (e.g. https://pippay-learning.raifanhabib31.workers.dev)
+    const redirectUri = window.location.origin.replace(/\/$/, '') + '/';
     const scope = encodeURIComponent('openid email profile');
     const responseType = encodeURIComponent('id_token token');
     const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -69,6 +70,60 @@ export const authService = {
 
     window.location.href = authUrl;
     return true;
+  },
+
+  /**
+   * Login interaktif menggunakan Google Identity Services (GSI) Popup / One-Tap
+   * Ini tidak memerlukan Authorized Redirect URI yang rumit karena menggunakan JavaScript Popup resmi Google
+   */
+  loginWithGooglePopup(callback: (user: UserProfile) => void, onError: (err: any) => void) {
+    const clientId = this.getGoogleClientId();
+    if (!clientId) {
+      onError(new Error('Google Client ID belum diatur.'));
+      return;
+    }
+
+    if (typeof (window as any).google !== 'undefined' && (window as any).google.accounts?.oauth2) {
+      const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            onError(tokenResponse.error);
+            return;
+          }
+          if (tokenResponse.access_token) {
+            try {
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+              });
+              if (res.ok) {
+                const info = await res.json();
+                const user: UserProfile = {
+                  id: `google_${info.sub || info.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+                  name: info.name || info.email.split('@')[0],
+                  email: info.email,
+                  avatarUrl: info.picture || `https://api.dicebear.com/7.x/notionists/svg?seed=${info.email}`,
+                  university: 'Fakultas Ilmu Komputer',
+                  provider: 'google',
+                  createdAt: new Date().toISOString(),
+                };
+                this.setCurrentUser(user);
+                callback(user);
+                return;
+              }
+            } catch (e) {
+              onError(e);
+            }
+          }
+        },
+      });
+
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+    } else {
+      // Fallback redirect
+      this.redirectToGoogleOAuth();
+    }
   },
 
   /**
