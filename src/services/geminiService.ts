@@ -1,6 +1,14 @@
 import type { SummaryType, Soal, QuestionType, Chapter } from '../types';
 import { storageService } from './storageService';
 
+const PLAIN_TEXT_MATH_RULE = `
+ATURAN FORMAT MATEMATIKA WAJIB:
+- Tulis semua penjelasan dan rumus dalam teks biasa atau Markdown standar.
+- Jangan gunakan sintaks LaTeX, KaTeX, delimiter matematika, atau tanda dolar ($).
+- Gunakan simbol murni seperti /, *, +, -, =, <=, >=, dan ^. Contoh: 45 / 2 = 22 sisa 1.
+- Untuk pecahan gunakan (pembilang) / (penyebut), dan jelaskan arti setiap variabel dengan teks biasa.
+`;
+
 async function callGemini(prompt: string, systemInstruction?: string): Promise<string> {
   const settings = storageService.getSettings();
   const apiKey = settings.geminiApiKey?.trim();
@@ -14,7 +22,7 @@ async function callGemini(prompt: string, systemInstruction?: string): Promise<s
         provider: 'gemini',
         apiKey,
         model,
-        prompt,
+        prompt: `${prompt}\n${PLAIN_TEXT_MATH_RULE}`,
         systemPrompt: systemInstruction,
       }),
     });
