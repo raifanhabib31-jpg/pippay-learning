@@ -33,7 +33,7 @@ function getRemoteUserId(): string | null {
   return user?.id || null;
 }
 
-async function syncSettingsToServer(settings: Record<string, unknown>): Promise<void> {
+async function syncSettingsToServer(settings: AppSettings): Promise<void> {
   const userId = getRemoteUserId();
   if (!userId) return;
 
@@ -565,9 +565,8 @@ export const storageService = {
 
   saveSettings(settings: AppSettings, syncRemote = true) {
     const key = getUserKey(STORAGE_KEYS.SETTINGS);
-    const { geminiApiKey: _geminiApiKey, openRouterApiKey: _openRouterApiKey, resendApiKey: _resendApiKey, emailJsPublicKey: _emailJsPublicKey, ...safeSettings } = settings;
-    localStorage.setItem(key, JSON.stringify(safeSettings));
-    if (syncRemote) void syncSettingsToServer(safeSettings);
+    localStorage.setItem(key, JSON.stringify(settings));
+    if (syncRemote) void syncSettingsToServer(settings);
   },
 
   exportAllData(): string {
