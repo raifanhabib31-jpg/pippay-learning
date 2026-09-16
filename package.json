@@ -21,6 +21,7 @@
     "katex": "^0.18.7",
     "lucide-react": "^1.46.0",
     "mammoth": "^1.12.3",
+    "marked": "^18.0.13",
     "pdfjs-dist": "^6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -42,5 +43,10 @@
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "wrangler": "^4.38.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true,
+    "workerd@1.20260911.1": true
   }
 }
