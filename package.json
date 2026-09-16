@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:pages": "npm run build && wrangler pages dev dist",
+    "deploy": "npm run deploy:pages",
     "deploy:pages": "npm run build && wrangler pages deploy dist --project-name pippay-learning",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
