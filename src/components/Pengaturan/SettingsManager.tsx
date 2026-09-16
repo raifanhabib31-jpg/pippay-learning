@@ -55,12 +55,18 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     setTestStatus(null);
 
     const modelName = formData.geminiModel || 'gemini-1.5-flash';
+    const currentApiKey = formData.geminiApiKey?.trim();
 
     try {
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: 'gemini', model: modelName, prompt: 'Balas dengan satu kata: OK' }),
+        body: JSON.stringify({
+          provider: 'gemini',
+          apiKey: currentApiKey,
+          model: modelName,
+          prompt: 'Balas dengan satu kata: OK',
+        }),
       });
 
       if (response.ok) {
@@ -80,7 +86,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     setIsOpenRouterTesting(true);
     setOpenRouterTestStatus(null);
 
-    const res = await openRouterService.testConnection();
+    const res = await openRouterService.testConnection(formData.openRouterApiKey);
 
     setOpenRouterTestStatus(res.message);
     setIsOpenRouterTesting(false);
@@ -95,7 +101,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     setIsTestingEmail(true);
     setEmailTestStatus(null);
 
-    const res = await emailService.testResendApiKey(formData.userEmail, formData.resendSenderEmail);
+    const res = await emailService.testResendApiKey(formData.userEmail, formData.resendSenderEmail, formData.resendApiKey);
 
     setEmailTestStatus(res.message);
     setIsTestingEmail(false);

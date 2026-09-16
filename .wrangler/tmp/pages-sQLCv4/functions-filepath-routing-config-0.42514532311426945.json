@@ -1,0 +1,29 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/ai",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/ai.js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/send-email",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/send-email.js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/settings",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/settings.js:onRequest"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

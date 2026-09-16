@@ -12,10 +12,9 @@ import {
   Loader2, 
   FileText 
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import type { SemesterRecord, DailyGradeItem, GradeCategory } from '../../types';
 import { geminiService } from '../../services/geminiService';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface AcademicTrackerModalProps {
   isOpen: boolean;
@@ -333,9 +332,9 @@ export const AcademicTrackerModal: React.FC<AcademicTrackerModalProps> = ({
                     </button>
                   </div>
                   <div className="prose-custom text-xs">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <MarkdownRenderer>
                       {selectedSemesterForAi.aiEvaluation}
-                    </ReactMarkdown>
+                    </MarkdownRenderer>
                   </div>
                 </div>
               )}

@@ -136,7 +136,7 @@ PippayLearning AI Assistant`;
   /**
    * Mengirim tes email untuk memvalidasi Resend API Key
    */
-  async testResendApiKey(toEmail: string, fromEmail?: string): Promise<{ success: boolean; message: string }> {
+  async testResendApiKey(toEmail: string, fromEmail?: string, customApiKey?: string): Promise<{ success: boolean; message: string }> {
     const settings = storageService.getSettings();
     const sender = fromEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
     const subject = '[PippayLearning] Tes Koneksi Resend API Berhasil!';
@@ -149,7 +149,7 @@ PippayLearning AI Assistant`;
     const text = 'Selamat! Resend API Key Anda telah terhubung dengan PippayLearning.';
 
     try {
-      await sendViaResendEndpoint(settings.resendApiKey, sender, toEmail, subject, html, text);
+      await sendViaResendEndpoint(customApiKey || settings.resendApiKey, sender, toEmail, subject, html, text);
       return {
         success: true,
         message: `Email tes berhasil dikirim ke ${toEmail} via Resend!`

@@ -29,12 +29,11 @@ import {
   Calendar, 
   BookMarked
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import type { Folder, Materi, SummaryType, Chapter } from '../../types';
 import { parseDocumentFile } from '../../services/fileParser';
 import { geminiService } from '../../services/geminiService';
 import { dualAgentService } from '../../services/dualAgentService';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 /* ─── ImageGallery: tampilan galeri gambar halaman dokumen ─── */
 const ImageGallery: React.FC<{ images: string[]; title: string }> = ({ images, title }) => {
@@ -197,6 +196,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
   const [shareCopied, setShareCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isExtractingChapters, setIsExtractingChapters] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // New folder modal states
   const [newFolderName, setNewFolderName] = useState('');
@@ -373,6 +373,31 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       alert('Gagal mengekstrak bab: ' + e.message);
     } finally {
       setIsExtractingChapters(false);
+    }
+  };
+
+  const handleGenerateIllustration = async () => {
+    if (!selectedMateri) return;
+    setIsGeneratingImage(true);
+    try {
+      const images = await geminiService.generateImage(
+        `Buat satu ilustrasi edukatif yang jelas dan akurat untuk materi "${selectedMateri.title}". ` +
+        `Gunakan diagram atau infografik berlabel dalam Bahasa Indonesia jika sesuai. ` +
+        `Jangan membuat poster dekoratif; tampilkan konsep utama yang membantu mahasiswa memahami materi. ` +
+        `Konteks materi:\n${selectedMateri.summary.slice(0, 5000)}`
+      );
+      const updated = {
+        ...selectedMateri,
+        images: [...(selectedMateri.images || []), ...images],
+        updatedAt: new Date().toISOString(),
+      };
+      onSaveMateri(updated);
+      setSelectedMateri(updated);
+      setActiveTab('gambar');
+    } catch (error: any) {
+      alert('Gagal menghasilkan gambar: ' + (error.message || 'Model tidak mendukung image generation.'));
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -780,6 +805,14 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   </button>
                   <span className="h-5 w-px bg-slate-200 dark:bg-dark-border mx-1" />
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2">Ringkasan AI</span>
+                  <button
+                    onClick={handleGenerateIllustration}
+                    disabled={isGeneratingImage}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 disabled:opacity-50"
+                    title="Buat ilustrasi materi dengan AI"
+                  >
+                    {isGeneratingImage ? <Loader2 className="w-4 h-4 animate-spin text-purple-500" /> : <Sparkles className="w-4 h-4 text-purple-500" />}
+                  </button>
                 </div>
                 <button
                   onClick={handleExportPDF}
@@ -791,9 +824,9 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
               </div>
 
               <div className="prose-custom max-w-none pb-12">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <MarkdownRenderer>
                   {selectedMateri.summary || selectedMateri.rawContent}
-                </ReactMarkdown>
+                </MarkdownRenderer>
               </div>
             </div>
           )}
@@ -902,9 +935,9 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
                   {/* Chapter Markdown Content */}
                   <div className="prose-custom max-w-none text-slate-800 dark:text-slate-200">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <MarkdownRenderer>
                       {activeChapter.content}
-                    </ReactMarkdown>
+                    </MarkdownRenderer>
                   </div>
 
                   {/* Key Takeaways Box */}

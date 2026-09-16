@@ -33,12 +33,40 @@ async function callGemini(prompt: string, systemInstruction?: string): Promise<s
   }
 }
 
+async function generateGeminiImage(prompt: string): Promise<string[]> {
+  const settings = storageService.getSettings();
+  const apiKey = settings.geminiApiKey?.trim();
+  const model = settings.geminiImageModel || 'gemini-2.0-flash-exp';
+
+  const response = await fetch('/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      provider: 'gemini',
+      apiKey,
+      model,
+      prompt,
+      responseModalities: ['TEXT', 'IMAGE'],
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || `Gemini Image API Error: HTTP ${response.status}`);
+  if (!Array.isArray(data.images) || data.images.length === 0) {
+    throw new Error('Model Gemini yang dipilih tidak mengembalikan gambar. Gunakan model image generation yang didukung.');
+  }
+  return data.images;
+}
+
 export const geminiService = {
   /**
    * Panggilan langsung Gemini API
    */
   async callRawGemini(prompt: string, systemInstruction?: string): Promise<string> {
     return callGemini(prompt, systemInstruction);
+  },
+
+  async generateImage(prompt: string): Promise<string[]> {
+    return generateGeminiImage(prompt);
   },
 
   /**

@@ -1,13 +1,13 @@
 import { storageService } from './storageService';
 
-async function callOpenRouter(prompt: string, systemPrompt?: string): Promise<string> {
+async function callOpenRouter(prompt: string, systemPrompt?: string, customApiKey?: string): Promise<string> {
   const settings = storageService.getSettings();
   const response = await fetch('/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       provider: 'openrouter',
-      apiKey: settings.openRouterApiKey?.trim(),
+      apiKey: (customApiKey || settings.openRouterApiKey)?.trim(),
       model: settings.openRouterModel || 'deepseek/deepseek-chat',
       prompt,
       systemPrompt,
@@ -22,9 +22,9 @@ async function callOpenRouter(prompt: string, systemPrompt?: string): Promise<st
 export const openRouterService = {
   callOpenRouter,
 
-  async testConnection(): Promise<{ success: boolean; message: string }> {
+  async testConnection(customApiKey?: string): Promise<{ success: boolean; message: string }> {
     try {
-      await callOpenRouter('Balas dengan satu kata: OK');
+      await callOpenRouter('Balas dengan satu kata: OK', undefined, customApiKey);
       return { success: true, message: 'Koneksi OpenRouter berhasil.' };
     } catch (error) {
       return { success: false, message: `Gagal terhubung ke OpenRouter: ${error instanceof Error ? error.message : 'Unknown error'}` };

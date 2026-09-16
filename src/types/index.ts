@@ -131,6 +131,7 @@ export interface DailyGradeItem {
 export interface AppSettings {
   geminiApiKey: string;
   geminiModel: string;
+  geminiImageModel?: string;
   openRouterApiKey?: string;
   openRouterModel?: string;
   userName: string;

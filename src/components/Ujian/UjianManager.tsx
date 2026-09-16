@@ -15,10 +15,9 @@ import {
   Loader2,
   GraduationCap
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import type { Folder, Materi, KisiKisiItem } from '../../types';
 import { geminiService } from '../../services/geminiService';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface UjianManagerProps {
   folders: Folder[];
@@ -222,19 +221,19 @@ export const UjianManager: React.FC<UjianManagerProps> = ({
             <div className="p-6">
               <div className="prose-custom max-w-none">
                 {activeResultTab === 'guide' && (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <MarkdownRenderer>
                     {activeItem.fullStudyGuide}
-                  </ReactMarkdown>
+                  </MarkdownRenderer>
                 )}
                 {activeResultTab === 'matched' && (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <MarkdownRenderer>
                     {activeItem.matchedContent || '_Tidak ada catatan lokal yang cocok langsung._'}
-                  </ReactMarkdown>
+                  </MarkdownRenderer>
                 )}
                 {activeResultTab === 'external' && (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <MarkdownRenderer>
                     {activeItem.externalAdditions || '_Semua kisi-kisi sudah tercakup dalam materi lokal Anda._'}
-                  </ReactMarkdown>
+                  </MarkdownRenderer>
                 )}
               </div>
             </div>

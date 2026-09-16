@@ -9,7 +9,7 @@ export async function onRequest(context) {
   if (request.method !== 'POST') return json({ success: false, message: 'Method not allowed' }, 405);
 
   try {
-    const { provider = 'gemini', prompt, systemPrompt, model, apiKey } = await request.json();
+    const { provider = 'gemini', prompt, systemPrompt, model, apiKey, responseModalities } = await request.json();
     if (typeof prompt !== 'string' || !prompt.trim()) return json({ success: false, message: 'Prompt wajib diisi.' }, 400);
 
     if (provider === 'openrouter') {
@@ -46,12 +46,22 @@ export async function onRequest(context) {
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
-        generationConfig: { temperature: 0.3, topP: 0.95 },
+        generationConfig: {
+          temperature: 0.3,
+          topP: 0.95,
+          ...(Array.isArray(responseModalities) && responseModalities.length > 0 ? { responseModalities } : {}),
+        },
       }),
     });
     const data = await response.json();
     if (!response.ok) return json({ success: false, message: data.error?.message || `Gemini HTTP ${response.status}` }, response.status);
-    return json({ success: true, content: data.candidates?.[0]?.content?.parts?.[0]?.text || '' });
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const text = parts.filter((part) => typeof part.text === 'string').map((part) => part.text).join('\n').trim();
+    const images = parts
+      .map((part) => part.inlineData)
+      .filter((inlineData) => inlineData?.data && inlineData?.mimeType)
+      .map((inlineData) => `data:${inlineData.mimeType};base64,${inlineData.data}`);
+    return json({ success: true, content: text, images });
   } catch (error) {
     return json({ success: false, message: error instanceof Error ? error.message : 'AI request gagal.' }, 500);
   }
