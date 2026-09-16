@@ -5,8 +5,6 @@ import {
   CheckCircle2, 
   ExternalLink, 
   ShieldCheck, 
-  Eye, 
-  EyeOff, 
   Key, 
   User, 
   Loader2, 
@@ -18,7 +16,7 @@ import {
 import type { AppSettings } from '../../types';
 import { storageService } from '../../services/storageService';
 import { emailService } from '../../services/emailService';
-import { kimiService } from '../../services/kimiService';
+import { openRouterService } from '../../services/openRouterService';
 
 interface SettingsManagerProps {
   settings: AppSettings;
@@ -32,14 +30,11 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
   onRefreshData,
 }) => {
   const [formData, setFormData] = useState<AppSettings>(settings);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [showKimiKey, setShowKimiKey] = useState(false);
-  const [showResendKey, setShowResendKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
-  const [kimiTestStatus, setKimiTestStatus] = useState<string | null>(null);
-  const [isKimiTesting, setIsKimiTesting] = useState(false);
+  const [openRouterTestStatus, setOpenRouterTestStatus] = useState<string | null>(null);
+  const [isOpenRouterTesting, setIsOpenRouterTesting] = useState(false);
   const [emailTestStatus, setEmailTestStatus] = useState<string | null>(null);
   const [isTestingEmail, setIsTestingEmail] = useState(false);
   const [showEmailJsConfig, setShowEmailJsConfig] = useState(false);
@@ -56,33 +51,23 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
   };
 
   const handleTestApiKey = async () => {
-    if (!formData.geminiApiKey.trim()) {
-      setTestStatus('Masukkan Gemini API Key terlebih dahulu.');
-      return;
-    }
-
     setIsTesting(true);
     setTestStatus(null);
 
     const modelName = formData.geminiModel || 'gemini-1.5-flash';
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${formData.geminiApiKey.trim()}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: 'Balas dengan satu kata: OK' }] }]
-          }),
-        }
-      );
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'gemini', model: modelName, prompt: 'Balas dengan satu kata: OK' }),
+      });
 
       if (response.ok) {
         setTestStatus(`Koneksi Berhasil! Model ${modelName} aktif dan siap digunakan.`);
       } else {
         const data = await response.json().catch(() => ({}));
-        setTestStatus(`Gagal terhubung (${modelName}): ${data.error?.message || 'Kunci API tidak valid atau model tidak tersedia.'}`);
+        setTestStatus(`Gagal terhubung (${modelName}): ${data.message || 'Model tidak tersedia.'}`);
       }
     } catch (e: any) {
       setTestStatus(`Gagal terhubung: ${e.message}`);
@@ -91,29 +76,17 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     }
   };
 
-  const handleTestKimiKey = async () => {
-    if (!formData.kimiApiKey?.trim()) {
-      setKimiTestStatus('Masukkan Kimi AI (Moonshot) API Key terlebih dahulu.');
-      return;
-    }
+  const handleTestOpenRouterKey = async () => {
+    setIsOpenRouterTesting(true);
+    setOpenRouterTestStatus(null);
 
-    setIsKimiTesting(true);
-    setKimiTestStatus(null);
+    const res = await openRouterService.testConnection();
 
-    const res = await kimiService.testConnection(
-      formData.kimiApiKey,
-      formData.kimiModel || 'moonshot-v1-8k'
-    );
-
-    setKimiTestStatus(res.message);
-    setIsKimiTesting(false);
+    setOpenRouterTestStatus(res.message);
+    setIsOpenRouterTesting(false);
   };
 
   const handleTestResendEmail = async () => {
-    if (!formData.resendApiKey?.trim()) {
-      setEmailTestStatus('Masukkan Resend API Key terlebih dahulu.');
-      return;
-    }
     if (!formData.userEmail?.trim()) {
       setEmailTestStatus('Masukkan Alamat Email Pengguna terlebih dahulu.');
       return;
@@ -122,11 +95,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
     setIsTestingEmail(true);
     setEmailTestStatus(null);
 
-    const res = await emailService.testResendApiKey(
-      formData.resendApiKey,
-      formData.userEmail,
-      formData.resendSenderEmail
-    );
+    const res = await emailService.testResendApiKey(formData.userEmail, formData.resendSenderEmail);
 
     setEmailTestStatus(res.message);
     setIsTestingEmail(false);
@@ -286,28 +255,12 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
 
           <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
-                Gemini API Key *
-              </label>
-              <div className="relative">
-                <input
-                  type={showApiKey ? 'text' : 'password'}
-                  placeholder="AIzaSy..."
-                  value={formData.geminiApiKey}
-                  onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })}
-                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl pl-3.5 pr-10 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                >
-                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                Kunci API disimpan hanya di memori browser lokal (LocalStorage) Anda secara aman.
-              </p>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">Gemini API Key Anda</label>
+              <input type="password" autoComplete="off" placeholder="AIza..." value={formData.geminiApiKey || ''} onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })} className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-hidden focus:ring-2 focus:ring-purple-500/40" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Key disimpan lokal di perangkat Anda dan hanya dikirim ke proxy API saat digunakan.</p>
+            </div>
+            <div className="rounded-2xl border border-purple-200 bg-purple-50 p-3 text-xs text-purple-800 dark:border-purple-500/30 dark:bg-purple-950/30 dark:text-purple-200">
+              API Gemini memakai proxy server. Key custom Anda disimpan lokal dan tidak pernah masuk ke sinkronisasi cloud.
             </div>
 
             {/* Model Selection */}
@@ -347,7 +300,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                   <button
                     type="button"
                     onClick={handleTestApiKey}
-                    disabled={isTesting || !formData.geminiApiKey}
+                    disabled={isTesting}
                     className="w-full py-2.5 px-4 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-2xl font-semibold border border-slate-200 dark:border-dark-border flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
                   >
                     {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />}
@@ -385,7 +338,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
           </div>
         </div>
 
-        {/* Section 2.5: Kimi AI (Moonshot) Engine for Double-Agent Collaboration */}
+        {/* Section 2.5: OpenRouter Engine for Double-Agent Collaboration */}
         <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 shadow-xs space-y-4 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-dark-border">
             <div className="flex items-center gap-2.5">
@@ -394,7 +347,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Kimi AI (Moonshot) Engine</h3>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">OpenRouter AI Engine</h3>
                   <span className="px-2 py-0.5 rounded-md bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold border border-cyan-200 dark:border-cyan-800/40">
                     Dual-Agent Partner
                   </span>
@@ -405,81 +358,65 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
               </div>
             </div>
             <a
-              href="https://platform.moonshot.cn/console/api-keys"
+              href="https://openrouter.ai/keys"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-semibold self-start sm:self-auto"
             >
-              <span>Dapatkan Kimi API Key</span>
+              <span>Dapatkan OpenRouter API Key</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
 
           <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
-                Kimi AI (Moonshot) API Key (sk-...)
-              </label>
-              <div className="relative">
-                <input
-                  type={showKimiKey ? 'text' : 'password'}
-                  placeholder="sk-..."
-                  value={formData.kimiApiKey || ''}
-                  onChange={(e) => setFormData({ ...formData, kimiApiKey: e.target.value.trim() })}
-                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl pl-3.5 pr-10 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-cyan-500/40 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKimiKey(!showKimiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                >
-                  {showKimiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                Opsional. Jika diisi, mode ringkasan <b>Double Agent</b> akan aktif: Kimi AI membuat narasi belajar & Gemini mengekstrak serta mengoreksi fakta.
-              </p>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">OpenRouter API Key Anda</label>
+              <input type="password" autoComplete="off" placeholder="sk-or-v1-..." value={formData.openRouterApiKey || ''} onChange={(e) => setFormData({ ...formData, openRouterApiKey: e.target.value })} className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-hidden focus:ring-2 focus:ring-cyan-500/40" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Key custom digunakan lebih dahulu; secret Cloudflare menjadi fallback.</p>
+            </div>
+            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-xs text-cyan-800 dark:border-cyan-500/30 dark:bg-cyan-950/30 dark:text-cyan-200">
+              OpenRouter memakai proxy server. Key custom Anda disimpan lokal dan tidak pernah masuk ke sinkronisasi cloud.
             </div>
 
-            {/* Model Selection for Kimi */}
+            {/* Model Selection for OpenRouter */}
             <div className="space-y-3">
               <label className="block text-slate-700 dark:text-slate-300 font-semibold">
-                Pilih Model Kimi AI (Moonshot)
+                Pilih Model OpenRouter
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <select
-                  value={formData.kimiModel || 'moonshot-v1-8k'}
-                  onChange={(e) => setFormData({ ...formData, kimiModel: e.target.value })}
+                  value={formData.openRouterModel || 'deepseek/deepseek-chat'}
+                  onChange={(e) => setFormData({ ...formData, openRouterModel: e.target.value })}
                   className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-cyan-500/40"
                 >
-                  <option value="moonshot-v1-8k">Moonshot v1 8K (Cepat, Ringan & Standar)</option>
-                  <option value="moonshot-v1-32k">Moonshot v1 32K (Konteks Sedang / Modul Menengah)</option>
-                  <option value="moonshot-v1-128k">Moonshot v1 128K (Konteks Panjang / Buku & Dokumen Tebal)</option>
-                  <option value="kimi-k1.5">Kimi k1.5 (Penalaran & Logika Baru)</option>
+                  <option value="deepseek/deepseek-chat">DeepSeek Chat (Narasi & Penjelasan)</option>
+                  <option value="deepseek/deepseek-r1">DeepSeek R1 (Analisis Mendalam)</option>
+                  <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
                 </select>
 
                 <div className="flex items-center">
                   <button
                     type="button"
-                    onClick={handleTestKimiKey}
-                    disabled={isKimiTesting || !formData.kimiApiKey}
+                    onClick={handleTestOpenRouterKey}
+                    disabled={isOpenRouterTesting}
                     className="w-full py-2.5 px-4 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-2xl font-semibold border border-slate-200 dark:border-dark-border flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
                   >
-                    {isKimiTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />}
-                    <span>Uji Koneksi Kimi AI</span>
+                    {isOpenRouterTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />}
+                    <span>Uji Koneksi OpenRouter</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {kimiTestStatus && (
+            {openRouterTestStatus && (
               <div className={`p-3 rounded-2xl border text-xs ${
-                kimiTestStatus.includes('Berhasil') 
+                openRouterTestStatus.includes('Berhasil')
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300' 
                   : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300'
               }`}>
-                {kimiTestStatus}
+                {openRouterTestStatus}
               </div>
             )}
           </div>
@@ -515,28 +452,12 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
 
           <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
-                Resend API Key (re_...)
-              </label>
-              <div className="relative">
-                <input
-                  type={showResendKey ? 'text' : 'password'}
-                  placeholder="re_123456789abcdef..."
-                  value={formData.resendApiKey || ''}
-                  onChange={(e) => setFormData({ ...formData, resendApiKey: e.target.value.trim() })}
-                  className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl pl-3.5 pr-10 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/40 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowResendKey(!showResendKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                >
-                  {showResendKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                Dapatkan API Key di <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold">resend.com/api-keys</a> (Gratis 3.000 email/bulan).
-              </p>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">Resend API Key Anda</label>
+              <input type="password" autoComplete="off" placeholder="re_..." value={formData.resendApiKey || ''} onChange={(e) => setFormData({ ...formData, resendApiKey: e.target.value })} className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-hidden focus:ring-2 focus:ring-emerald-500/40" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Key custom digunakan untuk pengiriman email Anda; secret Cloudflare menjadi fallback.</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200">
+              Resend memakai proxy server. Key custom Anda disimpan lokal dan tidak pernah masuk ke sinkronisasi cloud.
             </div>
 
             <div>
@@ -568,7 +489,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
               <button
                 type="button"
                 onClick={handleTestResendEmail}
-                disabled={isTestingEmail || !formData.resendApiKey}
+                disabled={isTestingEmail}
                 className="px-4 py-2.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-2xl font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-colors disabled:opacity-40 text-xs"
               >
                 {isTestingEmail ? <Loader2 className="w-4 h-4 animate-spin text-emerald-500" /> : <Send className="w-4 h-4 text-emerald-500" />}

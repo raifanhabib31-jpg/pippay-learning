@@ -35,15 +35,13 @@ export async function onRequest(context) {
   try {
     const payload = await request.json();
 
-    // API key: dari payload dulu, lalu env var
-    const apiKey =
-      (payload.apiKey && typeof payload.apiKey === 'string' && payload.apiKey.trim()) ||
-      (env && env.VITE_RESEND_API_KEY) ||
-      '';
+    const apiKey = typeof payload.apiKey === 'string' && payload.apiKey.trim()
+      ? payload.apiKey.trim()
+      : (env && env.RESEND_API_KEY) || '';
 
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Resend API key tidak ditemukan. Set VITE_RESEND_API_KEY di Cloudflare Pages → Settings → Environment variables.' }),
+        JSON.stringify({ success: false, message: 'Resend API Key belum dikonfigurasi di Pengaturan atau Cloudflare.' }),
         { status: 400, headers: corsHeaders }
       );
     }

@@ -28,6 +28,27 @@ function getUserKey(baseKey: string): string {
   return `${baseKey}_${user.id}`;
 }
 
+function getRemoteUserId(): string | null {
+  const user = authService.getCurrentUser();
+  return user?.id || null;
+}
+
+async function syncSettingsToServer(settings: Record<string, unknown>): Promise<void> {
+  const userId = getRemoteUserId();
+  if (!userId) return;
+
+  try {
+    const { geminiApiKey: _geminiApiKey, openRouterApiKey: _openRouterApiKey, resendApiKey: _resendApiKey, emailJsPublicKey: _emailJsPublicKey, ...safeSettings } = settings;
+    await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify(safeSettings),
+    });
+  } catch {
+    // Keep localStorage as the offline fallback.
+  }
+}
+
 const DEFAULT_FOLDERS: Folder[] = [
   {
     id: 'f-1',
@@ -364,14 +385,14 @@ const DEFAULT_DAILY_GRADES: DailyGradeItem[] = [
 const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: '',
   geminiModel: 'gemini-1.5-flash',
-  kimiApiKey: '',
-  kimiModel: 'moonshot-v1-8k',
+  openRouterApiKey: '',
+  openRouterModel: 'deepseek/deepseek-chat',
   userName: 'Raifan Habib',
   userTitle: 'Mahasiswa Berprestasi',
   userUniversity: 'Fakultas Ilmu Komputer',
   userBio: 'Fokus IPK 3.85+, aktif riset AI & kompetisi nasional.',
   userEmail: 'raifanhabib31@gmail.com',
-  resendApiKey: import.meta.env.VITE_RESEND_API_KEY || '',
+  resendApiKey: '',
   resendSenderEmail: 'PippayLearning <onboarding@resend.dev>',
   emailJsServiceId: '',
   emailJsTemplateId: '',
@@ -508,6 +529,12 @@ export const storageService = {
       return baseDefaults;
     }
     const parsed = JSON.parse(data);
+    if (!parsed.openRouterApiKey && parsed.deepseekApiKey) {
+      parsed.openRouterApiKey = parsed.deepseekApiKey;
+    }
+    if (!parsed.openRouterModel && parsed.deepseekModel) {
+      parsed.openRouterModel = `deepseek/${parsed.deepseekModel}`;
+    }
     if (!parsed.resendApiKey) {
       parsed.resendApiKey = DEFAULT_SETTINGS.resendApiKey;
     }
@@ -520,12 +547,27 @@ export const storageService = {
     return { ...baseDefaults, ...parsed };
   },
 
-  saveSettings(settings: AppSettings) {
+  async loadRemoteSettings(): Promise<AppSettings | null> {
+    const userId = getRemoteUserId();
+    if (!userId) return null;
+
+    try {
+      const response = await fetch('/api/settings', {
+        headers: { 'X-User-Id': userId },
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.settings || null;
+    } catch {
+      return null;
+    }
+  },
+
+  saveSettings(settings: AppSettings, syncRemote = true) {
     const key = getUserKey(STORAGE_KEYS.SETTINGS);
-    localStorage.setItem(key, JSON.stringify(settings));
-    // Sync to server so scheduled reminder has latest API key + email
-    const jadwal = this.getJadwal();
-    syncToServer(jadwal, settings);
+    const { geminiApiKey: _geminiApiKey, openRouterApiKey: _openRouterApiKey, resendApiKey: _resendApiKey, emailJsPublicKey: _emailJsPublicKey, ...safeSettings } = settings;
+    localStorage.setItem(key, JSON.stringify(safeSettings));
+    if (syncRemote) void syncSettingsToServer(safeSettings);
   },
 
   exportAllData(): string {

@@ -12,7 +12,8 @@ import {
   Users,
   Repeat,
   ArrowRightLeft,
-  Bell
+  Bell,
+  Pencil
 } from 'lucide-react';
 import type { Jadwal, JadwalType, JadwalReschedule, Folder, AppSettings } from '../../types';
 import { emailService } from '../../services/emailService';
@@ -34,6 +35,7 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
   onDeleteJadwal,
 }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingJadwal, setEditingJadwal] = useState<Jadwal | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   
   // Reschedule modal state
@@ -78,12 +80,33 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
   const countOrg = jadwalList.filter(j => j.type === 'organisasi').length;
   const countUjian = jadwalList.filter(j => j.type === 'ujian').length;
 
-  const handleCreateJadwal = (e: React.FormEvent) => {
+  const openAddModal = () => {
+    setEditingJadwal(null);
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (jadwal: Jadwal) => {
+    setEditingJadwal(jadwal);
+    setTitle(jadwal.title);
+    setCourseName(jadwal.courseName);
+    setType(jadwal.type);
+    setDate(jadwal.date);
+    setTime(jadwal.time || '09:00');
+    setLocationOrLink(jadwal.locationOrLink || '');
+    setNotes(jadwal.notes || '');
+    setTargetEmail(jadwal.userEmail || settings.userEmail || '');
+    setIsRecurring(Boolean(jadwal.isRecurring));
+    setDayOfWeek(jadwal.dayOfWeek || 'Senin');
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveJadwalForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date) return;
 
-    const newJadwal: Jadwal = {
-      id: 'j-' + Date.now(),
+    const updatedJadwal: Jadwal = {
+      ...(editingJadwal || {}),
+      id: editingJadwal?.id || 'j-' + Date.now(),
       title: title.trim(),
       courseName: courseName || (type === 'lomba' ? 'Kompetisi' : type === 'organisasi' ? 'Organisasi' : 'Umum'),
       type,
@@ -91,14 +114,15 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
       time,
       locationOrLink: locationOrLink.trim() || undefined,
       notes: notes.trim() || undefined,
-      reminderSent: false,
+      reminderSent: editingJadwal?.reminderSent || false,
       userEmail: targetEmail.trim() || undefined,
       isRecurring,
       dayOfWeek: isRecurring ? dayOfWeek : undefined,
     };
 
-    onSaveJadwal(newJadwal);
+    onSaveJadwal(updatedJadwal);
     setIsAddModalOpen(false);
+    setEditingJadwal(null);
 
     // Reset
     setTitle('');
@@ -225,7 +249,7 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
         </div>
 
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={openAddModal}
           className="px-5 py-3 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-950/20 transition-all transform active:scale-95 shrink-0 relative z-10"
         >
           <Plus className="w-4 h-4" />
@@ -307,7 +331,7 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
             <p className="text-xs text-slate-500 dark:text-slate-400">Tambahkan agenda ujian, rapat organisasi, atau jadwal lomba.</p>
           </div>
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={openAddModal}
             className="px-5 py-2.5 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-2xl text-xs font-bold shadow-md transition-colors inline-flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -439,6 +463,13 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
                   </div>
 
                   <button
+                    onClick={() => openEditModal(j)}
+                    className="p-1.5 text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-dark-750 rounded-lg transition-colors"
+                    title="Edit agenda"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => {
                       if (confirm('Hapus agenda ini?')) onDeleteJadwal(j.id);
                     }}
@@ -454,7 +485,7 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
         </div>
       )}
 
-      {/* Modal: Tambah Jadwal & Reminder */}
+      {/* Modal: Tambah / Edit Jadwal & Reminder */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl max-w-lg w-full p-6 text-slate-800 dark:text-slate-100 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -464,19 +495,22 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
                   <CalendarIcon className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Tambah Jadwal & Reminder</h3>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">{editingJadwal ? 'Edit Jadwal & Reminder' : 'Tambah Jadwal & Reminder'}</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Kuliah, Organisasi, Lomba, atau Kegiatan Luar</p>
                 </div>
               </div>
               <button
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setEditingJadwal(null);
+                }}
                 className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-750"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateJadwal} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveJadwalForm} className="space-y-4 text-xs">
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Judul Agenda *</label>
                 <input
@@ -622,7 +656,10 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-dark-border">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setEditingJadwal(null);
+                  }}
                   className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl font-semibold transition-colors"
                 >
                   Batal
@@ -631,7 +668,7 @@ export const JadwalManager: React.FC<JadwalManagerProps> = ({
                   type="submit"
                   className="px-5 py-2 bg-accent-orange hover:bg-accent-orangeHover text-white rounded-xl font-bold shadow-md transition-colors"
                 >
-                  Simpan Agenda
+                  {editingJadwal ? 'Simpan Perubahan' : 'Simpan Agenda'}
                 </button>
               </div>
             </form>

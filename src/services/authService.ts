@@ -255,34 +255,6 @@ export const authService = {
   },
 
   /**
-   * Login cepat langsung dengan Email Google
-   */
-  async loginWithGoogleDirect(email: string, name?: string, avatarUrl?: string): Promise<UserProfile> {
-    const cleanEmail = email.trim().toLowerCase();
-    const displayName =
-      name?.trim() ||
-      cleanEmail
-        .split('@')[0]
-        .replace(/[._]/g, ' ')
-        .replace(/\b\w/g, (l) => l.toUpperCase());
-
-    const user: UserProfile = {
-      id: `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      name: displayName,
-      email: cleanEmail,
-      avatarUrl:
-        avatarUrl ||
-        `https://api.dicebear.com/7.x/notionists/svg?seed=${cleanEmail}&backgroundColor=ffdfbf,ffd5dc,d1d4f9,c0aede,b6e3f4`,
-      university: 'Fakultas Ilmu Komputer',
-      provider: 'google',
-      createdAt: new Date().toISOString(),
-    };
-
-    this.setCurrentUser(user);
-    return user;
-  },
-
-  /**
    * Logout user saat ini
    */
   logout() {

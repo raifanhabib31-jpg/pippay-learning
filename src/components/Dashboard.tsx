@@ -29,6 +29,7 @@ import type {
   DailyGradeItem 
 } from '../types';
 import { AcademicTrackerModal } from './Academic/AcademicTrackerModal';
+import { ProfileCustomizationModal } from './ProfileCustomizationModal';
 
 interface DashboardProps {
   folders: Folder[];
@@ -45,6 +46,7 @@ interface DashboardProps {
   onOpenFolder?: (folderId: string) => void;
   onSelectMateri: (materi: Materi) => void;
   onSendEmailReminder: (jadwal: Jadwal) => void;
+  onSaveSettings: (settings: AppSettings) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -61,11 +63,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   setActiveTab,
   onSelectMateri,
   onSendEmailReminder,
+  onSaveSettings,
 }) => {
   const [activeAgendaFilter, setActiveAgendaFilter] = useState<'all' | 'ujian' | 'lomba' | 'organisasi'>('all');
   const [isAcademicModalOpen, setIsAcademicModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [targetIpkScore, setTargetIpkScore] = useState<number>(3.85);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Smart toggle states
   const [toggleStates, setToggleStates] = useState({
@@ -180,8 +184,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </button>
 
           <div 
-            onClick={() => setActiveTab('pengaturan')}
+            onClick={() => {
+              setIsProfileModalOpen(true);
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setIsProfileModalOpen(true);
+              }
+            }}
             className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl bg-purple-50 dark:bg-dark-800 border border-purple-200/60 dark:border-dark-border cursor-pointer hover:bg-purple-100/70 dark:hover:bg-dark-750 transition-colors"
+            title="Kustomisasi profil"
           >
             <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
               {(settings.userName || 'Scarlett').charAt(0)}
@@ -195,6 +210,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {isProfileModalOpen && (
+        <ProfileCustomizationModal
+          settings={settings}
+          totalMateri={materi.length}
+          totalFiles={materi.filter((item) => item.originalFileName).length}
+          totalUjian={jadwal.filter((item) => item.type === 'ujian').length}
+          onSave={(updatedSettings) => {
+            onSaveSettings(updatedSettings);
+            setIsProfileModalOpen(false);
+          }}
+          onClose={() => setIsProfileModalOpen(false)}
+        />
+      )}
 
       {/* Main Grid Layout: Center Area (8 cols on desktop) + Right Panel (4 cols on desktop) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

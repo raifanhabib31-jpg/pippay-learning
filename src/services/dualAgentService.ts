@@ -1,5 +1,5 @@
 import { geminiService } from './geminiService';
-import { kimiService } from './kimiService';
+import { openRouterService } from './openRouterService';
 import { storageService } from './storageService';
 
 export interface DualAgentProgress {
@@ -14,7 +14,7 @@ export const dualAgentService = {
   /**
    * Pipeline Double Agent AI:
    * 1. Gemini: Ekstraksi Fakta, Sumber, Teori & Rumus
-   * 2. Kimi AI: Rangkai Narasi Edukatif & Storytelling Mengalir
+  * 2. OpenRouter AI: Rangkai Narasi Edukatif & Storytelling Mengalir
    * 3. Gemini: Audit, Koreksi Halusinasi & Verifikasi Ground-Truth
    */
   async generateDualAgentNarrative(
@@ -25,16 +25,16 @@ export const dualAgentService = {
     onProgress?: (progress: DualAgentProgress) => void
   ): Promise<string> {
     const settings = storageService.getSettings();
-    const hasKimi = Boolean(settings.kimiApiKey?.trim());
+    const hasOpenRouter = Boolean(settings.openRouterApiKey?.trim());
 
-    // JIKA TIDAK ADA KIMI API KEY: Fallback elegan ke Gemini dengan format naratif audit
-    if (!hasKimi) {
+    // Tanpa model OpenRouter, gunakan fallback Gemini agar ringkasan tetap dapat dibuat.
+    if (!hasOpenRouter) {
       onProgress?.({
         step: 1,
         totalSteps: 1,
         stageName: 'Gemini Standalone Mode',
         agentName: 'Gemini AI',
-        detail: 'Kimi AI API Key belum diisi. Menggunakan Gemini Single-Agent High Precision Narrative...'
+        detail: 'OpenRouter API Key belum diisi. Menggunakan Gemini Single-Agent High Precision Narrative...'
       });
 
       return geminiService.summarizeDocument(
@@ -79,17 +79,17 @@ Format Output Ekstraksi:
     const extractedFacts = await geminiService.callRawGemini(geminiFactPrompt, 'Anda adalah AI Researcher yang sangat teliti, presisi, dan berbasis data otentik.');
 
     // ==========================================
-    // STEP 2: KIMI AI (CREATIVE NARRATOR)
+    // STEP 2: OPENROUTER AI (CREATIVE NARRATOR)
     // ==========================================
     onProgress?.({
       step: 2,
       totalSteps: 3,
       stageName: 'Tahap 2: Merangkai Narasi & Storytelling Edukatif',
-      agentName: 'Kimi AI (Narrator)',
+      agentName: 'OpenRouter AI (Narrator)',
       detail: 'Mengubah fakta kaku menjadi narasi belajar yang mengalir, mudah dipahami, kaya analogi, dan interaktif...'
     });
 
-    const kimiPrompt = `Anda adalah AGENT 2 (The Educator & Storyteller) dalam sistem Double Agent AI.
+    const narratorPrompt = `Anda adalah AGENT 2 (The Educator & Storyteller) dalam sistem Double Agent AI.
 Anda menerima fakta resmi dan data materi yang telah diekstrak oleh Gemini AI (Agent 1).
 
 Tugas Anda: Ubah fakta-fakta ini menjadi materi pembelajaran naratif bergaya storytelling kelas dunia untuk mahasiswa.
@@ -104,9 +104,9 @@ FAKTA RESMI DARI GEMINI (AGENT 1):
 ${extractedFacts}
 """`;
 
-    const rawNarrative = await kimiService.callKimi(
-      kimiPrompt,
-      'Anda adalah Kimi AI, Master Educator dan Penulis Narasi Pembelajaran yang piawai membuat topik sulit terasa mudah dan menyenangkan.'
+    const rawNarrative = await openRouterService.callOpenRouter(
+      narratorPrompt,
+      'Anda adalah OpenRouter AI, Master Educator dan Penulis Narasi Pembelajaran yang piawai membuat topik sulit terasa mudah dan menyenangkan.'
     );
 
     // ==========================================
@@ -117,32 +117,32 @@ ${extractedFacts}
       totalSteps: 3,
       stageName: 'Tahap 3: Audit Halusinasi & Verifikasi Ground-Truth',
       agentName: 'Gemini AI (Auditor)',
-      detail: 'Menguji narasi Kimi AI terhadap dokumen asli, meluruskan rumus, dan memberi cap sertifikasi akurasi 100%...'
+      detail: 'Menguji narasi OpenRouter terhadap dokumen asli, meluruskan rumus, dan memberi cap sertifikasi akurasi 100%...'
     });
 
     const geminiAuditPrompt = `Anda adalah AGENT 3 (Lead Auditor & Ground-Truth Fact-Checker) dalam sistem Double Agent AI.
 Tugas Anda:
-1. Periksa narasi yang ditulis oleh Kimi AI (Agent 2) di bawah ini.
+1. Periksa narasi yang ditulis melalui OpenRouter (Agent 2) di bawah ini.
 2. Bandingkan dengan fakta materi asli dari dokumen.
 3. Koreksi jika ada:
    - Halusinasi fakta atau analogi yang keliru secara ilmiah.
    - Rumus / kode / istilah teknis yang melenceng.
    - Konsep penting yang terlewat.
-4. Buat versi FINAL yang sempurna, menggabungkan gaya narasi Kimi AI yang asyik dengan 100% akurasi faktual dari Gemini.
+4. Buat versi FINAL yang sempurna, menggabungkan gaya narasi OpenRouter yang asyik dengan 100% akurasi faktual dari Gemini.
 
 DOKUMEN ASLI:
 """
 ${rawContent.slice(0, 20000)}
 """
 
-NARASI DARI KIMI AI (AGENT 2):
+NARASI DARI OPENROUTER (AGENT 2):
 """
 ${rawNarrative}
 """
 
 FORMAT OUTPUT FINAL:
 Sertakan header akreditasi di bagian paling atas:
-> 🛡️ **Hasil Kolaborasi Double Agent AI**: Narasi disusun oleh **Kimi AI (${settings.kimiModel || 'moonshot-v1-8k'})** & diverifikasi 100% akurat oleh **Gemini AI (${settings.geminiModel || 'Gemini-1.5-Flash'})**.
+> 🛡️ **Hasil Kolaborasi Double Agent AI**: Narasi disusun melalui **OpenRouter (${settings.openRouterModel || 'deepseek/deepseek-chat'})** & diverifikasi 100% akurat oleh **Gemini AI (${settings.geminiModel || 'Gemini-1.5-Flash'})**.
 
 Lanjutkan dengan konten materi lengkap hasil audit akhir yang rapi dalam format Markdown.`;
 

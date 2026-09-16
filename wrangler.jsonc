@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pippay-learning",
+  "compatibility_date": "2026-09-15",
+  "pages_build_output_dir": "dist",
+  "kv_namespaces": [
+    {
+      "binding": "SETTINGS_KV",
+      "id": "2f3c93bc69e541338dd29c8ae4beb291"
+    }
+  ]
+}

@@ -1,8 +1,5 @@
-import emailjs from '@emailjs/browser';
 import type { Jadwal, AppSettings } from '../types';
 import { storageService } from './storageService';
-
-export const DEFAULT_RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY || '';
 
 export interface SendEmailResult {
   success: boolean;
@@ -34,7 +31,7 @@ function formatResendSender(sender?: string): string {
 }
 
 async function sendViaResendEndpoint(
-  apiKey: string,
+  apiKey: string | undefined,
   from: string,
   to: string,
   subject: string,
@@ -127,78 +124,20 @@ PippayLearning AI Assistant`;
       </div>
     `;
 
-    // 1. Try Resend API with built-in default key
-    const resendKey = settings.resendApiKey?.trim() || DEFAULT_RESEND_API_KEY;
-    if (resendKey) {
-      const sender = settings.resendSenderEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
-      try {
-        await sendViaResendEndpoint(resendKey, sender, recipientEmail, subject, htmlContent, body);
-        return {
-          success: true,
-          message: `Email pengingat berhasil dikirim ke ${recipientEmail} via Resend API!`,
-          previewContent: { to: recipientEmail, subject, body }
-        };
-      } catch (error: any) {
-        console.error('Resend API error:', error);
-        return {
-          success: false,
-          message: `Gagal mengirim via Resend: ${error.message}.`,
-          previewContent: { to: recipientEmail, subject, body }
-        };
-      }
+    const sender = settings.resendSenderEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
+    try {
+      await sendViaResendEndpoint(settings.resendApiKey, sender, recipientEmail, subject, htmlContent, body);
+      return { success: true, message: `Email pengingat berhasil dikirim ke ${recipientEmail} via Resend API!`, previewContent: { to: recipientEmail, subject, body } };
+    } catch (error: any) {
+      return { success: false, message: `Gagal mengirim via Resend: ${error.message}.`, previewContent: { to: recipientEmail, subject, body } };
     }
-
-    // 2. Check if EmailJS is configured
-    if (settings.emailJsServiceId && settings.emailJsTemplateId && settings.emailJsPublicKey) {
-      try {
-        await emailjs.send(
-          settings.emailJsServiceId,
-          settings.emailJsTemplateId,
-          {
-            to_email: recipientEmail,
-            to_name: userName,
-            subject: subject,
-            agenda_title: jadwal.title,
-            course_name: jadwal.courseName,
-            date_time: `${jadwal.date} pukul ${jadwal.time}`,
-            location: jadwal.locationOrLink || '-',
-            notes: jadwal.notes || '-',
-            message: body,
-          },
-          settings.emailJsPublicKey
-        );
-
-        return {
-          success: true,
-          message: `Email pengingat berhasil dikirim ke ${recipientEmail} via EmailJS!`,
-          previewContent: { to: recipientEmail, subject, body }
-        };
-      } catch (error) {
-        console.error('EmailJS sending error:', error);
-        return {
-          success: false,
-          message: `Gagal mengirim via EmailJS: ${error instanceof Error ? error.message : 'Error'}. Cek konfigurasi di menu Pengaturan.`,
-          previewContent: { to: recipientEmail, subject, body }
-        };
-      }
-    }
-
-    // 3. Fallback simulation with preview
-    return {
-      success: true,
-      message: `Pengingat berhasil disimulasikan ke ${recipientEmail}. Masukkan Resend API Key di menu Pengaturan untuk pengiriman riil.`,
-      previewContent: {
-        to: recipientEmail,
-        subject,
-        body,
-      }
-    };
   },
 
   /**
    * Mengirim tes email untuk memvalidasi Resend API Key
    */
-  async testResendApiKey(apiKey: string, toEmail: string, fromEmail?: string): Promise<{ success: boolean; message: string }> {
+  async testResendApiKey(toEmail: string, fromEmail?: string): Promise<{ success: boolean; message: string }> {
+    const settings = storageService.getSettings();
     const sender = fromEmail?.trim() || 'PippayLearning <onboarding@resend.dev>';
     const subject = '[PippayLearning] Tes Koneksi Resend API Berhasil!';
     const html = `
@@ -210,7 +149,7 @@ PippayLearning AI Assistant`;
     const text = 'Selamat! Resend API Key Anda telah terhubung dengan PippayLearning.';
 
     try {
-      await sendViaResendEndpoint(apiKey, sender, toEmail, subject, html, text);
+      await sendViaResendEndpoint(settings.resendApiKey, sender, toEmail, subject, html, text);
       return {
         success: true,
         message: `Email tes berhasil dikirim ke ${toEmail} via Resend!`

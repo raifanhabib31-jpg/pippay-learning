@@ -169,7 +169,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
   onStartQuizFromMateri,
 }) => {
   const [selectedMateri, setSelectedMateri] = useState<Materi | null>(null);
-  const [activeTab, setActiveTab] = useState<'bab' | 'dokumen' | 'mindmap' | 'gambar'>('bab');
+  const [activeTab, setActiveTab] = useState<'bab' | 'dokumen' | 'mindmap' | 'gambar'>('dokumen');
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
   
   // Modals
@@ -191,6 +191,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
   const [summaryMode, setSummaryMode] = useState<SummaryType>('lengkap');
   const [additionalPrompt, setAdditionalPrompt] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryProgress, setSummaryProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [copied, setCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -243,12 +244,14 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
     const title = docTitle.trim() || selectedFile?.name.replace(/\.[^/.]+$/, '') || 'Catatan Baru';
 
     setIsSummarizing(true);
+    setSummaryProgress(5);
     let extractedImages: string[] = [];
 
     try {
       if (uploadType === 'file' && selectedFile) {
         setStatusMessage('Mengekstrak teks & gambar dari file ' + selectedFile.name + '...');
         const parsed = await parseDocumentFile(selectedFile);
+        setSummaryProgress(18);
         contentToSummarize = parsed.text;
         fileType = parsed.fileType;
         originalName = parsed.fileName;
@@ -256,6 +259,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
         extractedImages = parsed.images || [];
       } else {
         contentToSummarize = rawTextInput.trim();
+        setSummaryProgress(18);
         fileType = 'text';
         originalName = 'Catatan Manual';
         fileSize = `${(contentToSummarize.length / 1024).toFixed(1)} KB`;
@@ -275,10 +279,15 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
           title,
           additionalPrompt.trim() || undefined,
           (prog) => {
+            const stageProgress = prog.totalSteps === 1
+              ? 62
+              : [30, 48, 65][prog.step - 1] || 30;
+            setSummaryProgress(stageProgress);
             setStatusMessage(`[${prog.agentName}] ${prog.stageName}`);
           }
         );
       } else {
+        setSummaryProgress(32);
         setStatusMessage('Gemini AI sedang menganalisis & merangkum...');
         summaryResult = await geminiService.summarizeDocument(
           contentToSummarize,
@@ -287,8 +296,10 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
           title,
           additionalPrompt.trim() || undefined
         );
+        setSummaryProgress(65);
       }
 
+      setSummaryProgress(78);
       setStatusMessage('Menyusun Bab & Sub-Bab terstruktur...');
       const chaptersResult = await geminiService.extractChaptersFromContent(
         contentToSummarize,
@@ -296,6 +307,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
         targetCourse,
         additionalPrompt.trim() || undefined
       );
+      setSummaryProgress(92);
 
       const description = summaryResult.split('\n\n')[0]?.replace(/[#*_`]/g, '').trim() || 
         `Materi perkuliahan ${title} untuk mata kuliah ${targetCourse}.`;
@@ -318,6 +330,8 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       };
 
       onSaveMateri(newMateriItem);
+      setSummaryProgress(100);
+      setStatusMessage('Ringkasan selesai dan tersimpan.');
       setSelectedFolderId(targetFolderId);
       setSelectedMateri(newMateriItem);
       setIsUploadModalOpen(false);
@@ -331,6 +345,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
       alert('Gagal memproses dokumen: ' + (err.message || 'Error'));
     } finally {
       setIsSummarizing(false);
+      setSummaryProgress(0);
       setStatusMessage('');
     }
   };
@@ -501,7 +516,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
           </div>
 
           {/* Main Title & Executive Header Card */}
-          <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 space-y-6 shadow-xs">
+          <div className="max-w-4xl mx-auto w-full space-y-6">
             {/* Badges & Meta */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap">
@@ -544,7 +559,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
             {/* Title & Description */}
             <div className="space-y-3">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {selectedMateri.title}
               </h1>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
@@ -553,7 +568,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
             </div>
 
             {/* Quick Action Pills */}
-            <div className="flex items-center gap-2.5 flex-wrap pt-2 border-t border-slate-100 dark:border-dark-border/60">
+            <div className="flex items-center gap-1.5 flex-wrap pt-3 border-t border-slate-200 dark:border-dark-border/70">
               <button
                 onClick={() => onStartQuizFromMateri(selectedMateri)}
                 className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-full text-xs font-semibold border border-slate-200 dark:border-dark-border flex items-center gap-2 transition-all hover:border-purple-500/50 cursor-pointer"
@@ -754,19 +769,28 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
           {/* VIEW TAB 2: DOKUMEN LENGKAP */}
           {activeTab === 'dokumen' && (
-            <div className="bg-white dark:bg-dark-850 border border-slate-200 dark:border-dark-border rounded-3xl p-6 md:p-8 space-y-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-dark-border">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Ringkasan Dokumen Lengkap</h2>
+            <div className="max-w-4xl mx-auto w-full space-y-6">
+              <div className="flex items-center justify-between border-y border-slate-200 dark:border-dark-border py-2">
+                <div className="flex items-center gap-1 text-slate-400">
+                  <button onClick={handleCopySummary} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800" title="Salin ringkasan">
+                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <button onClick={handleSpeakSummary} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800" title="Dengarkan ringkasan">
+                    {isSpeaking ? <VolumeX className="w-4 h-4 text-amber-500" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                  <span className="h-5 w-px bg-slate-200 dark:bg-dark-border mx-1" />
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2">Ringkasan AI</span>
+                </div>
                 <button
-                  onClick={handleCopySummary}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium border border-slate-200 dark:border-dark-border flex items-center gap-1.5"
+                  onClick={handleExportPDF}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-800"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                  <span>{copied ? 'Tersalin' : 'Salin Semua Teks'}</span>
+                  <FileDown className="w-3.5 h-3.5" />
+                  <span>Ekspor PDF</span>
                 </button>
               </div>
 
-              <div className="prose-custom max-w-none">
+              <div className="prose-custom max-w-none pb-12">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {selectedMateri.summary || selectedMateri.rawContent}
                 </ReactMarkdown>
@@ -1293,7 +1317,7 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   onChange={(e) => setSummaryMode(e.target.value as SummaryType)}
                   className="w-full px-4 py-2.5 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-border rounded-2xl text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500/40"
                 >
-                  <option value="dual_agent">🤖 Double Agent (Kimi AI Narasi + Gemini Audit Fakta)</option>
+                  <option value="dual_agent">Double Agent, Gemini + Bebas</option>
                   <option value="lengkap">Lengkap & Komprehensif (Gemini Single-Agent)</option>
                   <option value="poin_kunci">Poin-Poin Kunci Saja</option>
                   <option value="rumus_definisi">Fokus Rumus & Definisi</option>
@@ -1304,10 +1328,10 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
                   <div className="p-3 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/40 text-xs text-cyan-900 dark:text-cyan-200 space-y-1 animate-in fade-in duration-200">
                     <div className="font-bold flex items-center gap-1.5 text-cyan-700 dark:text-cyan-300">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Pipeline Double Agent AI Aktif (Gemini + Kimi AI)</span>
+                      <span>Penggunaan Double Agent AI Untuk Keakuratan Maksimal</span>
                     </div>
                     <p className="text-[11px] text-cyan-700/90 dark:text-cyan-300/80 leading-relaxed">
-                      1. <b>Gemini AI</b> mengekstrak fakta & rumus otentik &rarr; 2. <b>Kimi AI</b> menulis narasi storytelling komunikatif &rarr; 3. <b>Gemini AI</b> mengaudit & memvalidasi keakuratan 100%.
+                      Gemini AI dan OpenRouter bekerja bersama untuk menghasilkan ringkasan yang lebih akurat dan mudah dipahami.
                     </p>
                   </div>
                 )}
@@ -1402,9 +1426,24 @@ export const MateriManager: React.FC<MateriManagerProps> = ({
 
               {/* Status or loader */}
               {isSummarizing && (
-                <div className="p-4 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-500/30 rounded-2xl flex items-center gap-3 text-xs text-purple-800 dark:text-purple-200">
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400 shrink-0" />
-                  <span>{statusMessage || 'Sedang memproses dengan Gemini AI...'}</span>
+                <div className="p-4 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-500/30 rounded-2xl space-y-3 text-xs text-purple-800 dark:text-purple-200">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400 shrink-0" />
+                      <span className="truncate">{statusMessage || 'Sedang memproses dengan AI...'}</span>
+                    </div>
+                    <span className="font-bold tabular-nums shrink-0">{summaryProgress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-purple-200/70 dark:bg-purple-900/60 overflow-hidden" aria-label={`Progress ringkasan ${summaryProgress}%`}>
+                    <div
+                      className="h-full rounded-full bg-purple-600 dark:bg-purple-400 transition-[width] duration-500 ease-out"
+                      style={{ width: `${summaryProgress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-purple-600/80 dark:text-purple-300/80">
+                    <span>Memproses materi</span>
+                    <span>{summaryProgress >= 92 ? 'Hampir selesai' : 'AI sedang bekerja'}</span>
+                  </div>
                 </div>
               )}
 

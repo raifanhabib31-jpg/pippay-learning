@@ -77,7 +77,7 @@ export function App() {
   });
 
   // Load all initial data
-  const loadData = () => {
+  const loadData = async () => {
     setFolders(storageService.getFolders());
     setMateri(storageService.getMateri());
     setKisiKisiList(storageService.getKisiKisi());
@@ -85,7 +85,16 @@ export function App() {
     setJadwalList(storageService.getJadwal());
     setSemesters(storageService.getSemesters());
     setDailyGrades(storageService.getDailyGrades());
-    setSettings(storageService.getSettings());
+    const localSettings = storageService.getSettings();
+    const remoteSettings = await storageService.loadRemoteSettings();
+    if (remoteSettings) {
+      const mergedSettings = { ...localSettings, ...remoteSettings };
+      storageService.saveSettings(mergedSettings, false);
+      setSettings(mergedSettings);
+    } else {
+      setSettings(localSettings);
+      void storageService.saveSettings(localSettings);
+    }
   };
 
   // Check Google OAuth redirect callback on startup
@@ -298,7 +307,6 @@ export function App() {
         theme={theme}
         toggleTheme={toggleTheme}
         onLogout={handleLogout}
-        currentUser={currentUser}
       />
 
       {/* Main Content Area */}
@@ -318,7 +326,7 @@ export function App() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                Pippay
+                Pippay Learning
               </span>
               <span className="text-slate-400 dark:text-slate-600">/</span>
               <span className="text-xs font-bold text-slate-800 dark:text-white">
@@ -353,6 +361,7 @@ export function App() {
                 setActiveTab('materi');
               }}
               onSendEmailReminder={handleQuickSendEmail}
+              onSaveSettings={handleSaveSettings}
             />
           )}
 

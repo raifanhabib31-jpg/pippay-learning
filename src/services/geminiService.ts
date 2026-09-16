@@ -1,58 +1,27 @@
 import type { SummaryType, Soal, QuestionType, Chapter } from '../types';
 import { storageService } from './storageService';
 
-const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
-
 async function callGemini(prompt: string, systemInstruction?: string): Promise<string> {
   const settings = storageService.getSettings();
   const apiKey = settings.geminiApiKey?.trim();
   const model = settings.geminiModel || 'gemini-1.5-flash';
 
-  if (!apiKey) {
-    // If no API key is provided, return intelligent simulated response based on prompt context
-    console.warn('Gemini API Key belum dimasukkan. Menggunakan engine analisis lokal.');
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return generateOfflineAnalysis(prompt);
-  }
-
-  const url = `${GEMINI_API_ENDPOINT}/${model}:generateContent?key=${apiKey}`;
-
-  const payload: any = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: prompt }]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.3,
-      topP: 0.95,
-    }
-  };
-
-  if (systemInstruction) {
-    payload.systemInstruction = {
-      parts: [{ text: systemInstruction }]
-    };
-  }
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch('/api/ai', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'gemini',
+        apiKey,
+        model,
+        prompt,
+        systemPrompt: systemInstruction,
+      }),
     });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const message = errData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(`Gemini API Error: ${message}`);
-    }
-
-    const data = await response.json();
-    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || `Gemini API Error: HTTP ${response.status}`);
+    const candidateText = data.content;
     if (!candidateText) {
       throw new Error('Tidak ada respon teks yang dihasilkan oleh Gemini.');
     }
@@ -480,53 +449,6 @@ function parseChaptersFallback(content: string, title: string): Chapter[] {
       isCompleted: idx === 0,
     };
   });
-}
-
-/**
- * Intelligent fallback generator if API key is not configured or in case of parsing errors
- */
-function generateOfflineAnalysis(prompt: string): string {
-  if (prompt.includes('Analisis Kisi-Kisi')) {
-    return `===MATCHED_CONTENT===
-### Materi yang Teridentifikasi dalam Catatan:
-- Konsep fundamental & terminologi dasar yang relevan dengan topik mata kuliah.
-- Struktur algoritma / teori utama yang telah diringkas sebelumnya.
-- Definisi parameter dan karakteristik sistem.
-
-===EXTERNAL_ADDITIONS===
-### Materi Pelengkap dari Basis Pengetahuan AI:
-- **Analisis Kasus Khusus & Edge Cases**: Variasi implementasi dan batasan performa sistem pada skala besar.
-- **Perbandingan Mendalam**: Kelebihan dan kekurangan masing-masing metode dibandingkan pendekatan alternatif.
-- **Formula & Rumus Tambahan**: Turunan rumus dan efisiensi waktu/ruang dalam kondisi terburuk (*worst-case scenario*).
-
-===FULL_STUDY_GUIDE===
-# Panduan Komprehensif Persiapan Ujian
-
-## 1. Poin Inti yang Wajib Dikuasai
-1. **Definisi & Karakteristik Utama**: Pahami cara kerja sistem dari input hingga output.
-2. **Kompleksitas & Analisis Kinerja**: Hafalkan perbandingan efisiensi waktu dan memori.
-3. **Langkah-Langkah Eksekusi**: Kuasai algoritma langkah demi langkah untuk soal hitungan/tracing.
-
-## 2. Prediksi Pola Soal Dosen
-- **Soal Teori & Konseptual**: Jelaskan perbedaan antara metode A dan metode B beserta kondisi penggunaannya.
-- **Soal Hitungan / Tracing**: Diberikan data awal, simulasikan alur proses hingga hasil akhir.
-- **Soal Analisis / Studi Kasus**: Pilih pendekatan terbaik untuk menyelesaikan permasalahan nyata dengan justifikasi teknis.
-
-> *Tips Ujian*: Kerjakan soal dengan bobot nilai terbesar terlebih dahulu, dan sertakan diagram alur jika menjawab soal essay!`;
-  }
-
-  return `## Ringkasan Terstruktur
-
-### 1. Ringkasan Eksekutif
-Dokumen ini membahas konsep-konsep krusial perkuliahan dengan penekanan pada pemahaman teori, alur mekanisme, dan aplikasi praktis.
-
-### 2. Poin-Poin Utama
-- **Konsep Kunci**: Landasan teoritis dan prinsip dasar yang mengatur topik bahasan.
-- **Mekanisme Kerja**: Langkah operasional sistem dan interaksi antar komponen.
-- **Implementasi**: Penerapan dalam kasus nyata dan skenario perkuliahan.
-
-### 3. Kesimpulan & Rekomendasi Belajar
-Fokuskan pembelajaran pada pemahaman hubungan sebab-akibat antar komponen serta latihan pengerjaan studi kasus.`;
 }
 
 function generateFallbackQuestions(count: number, type: QuestionType): Soal[] {

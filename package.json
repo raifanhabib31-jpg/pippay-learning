@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:pages": "npm run build && wrangler pages dev dist",
+    "deploy:pages": "npm run build && wrangler pages deploy dist --project-name pippay-learning",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -33,6 +35,7 @@
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.17",
     "typescript": "~6.0.2",
+    "wrangler": "^4.38.0",
     "vite": "^8.3.0"
   }
 }

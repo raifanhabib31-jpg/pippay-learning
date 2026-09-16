@@ -14,7 +14,7 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-import type { TabType, UserProfile } from '../types';
+import type { TabType } from '../types';
 
 interface NavigationProps {
   activeTab: TabType;
@@ -26,7 +26,6 @@ interface NavigationProps {
   theme: 'dark' | 'light';
   toggleTheme: () => void;
   onLogout?: () => void;
-  currentUser?: UserProfile | null;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -39,7 +38,6 @@ export const Navigation: React.FC<NavigationProps> = ({
   theme,
   toggleTheme,
   onLogout,
-  currentUser,
 }) => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
@@ -106,8 +104,6 @@ export const Navigation: React.FC<NavigationProps> = ({
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            {/* Glowing gradient indicator on logo */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-gradient-to-tr from-purple-600 to-amber-500 border-2 border-white dark:border-dark-900" />
           </div>
         </div>
 
@@ -176,35 +172,6 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         {/* Bottom Utility Actions (Theme Toggle, Help, API Key, Exit) */}
         <div className="flex flex-col items-center space-y-4 w-full pt-4 border-t border-slate-100 dark:border-dark-border">
-          
-          {/* User Avatar Badge */}
-          {currentUser && (
-            <div className="relative group cursor-default" title={currentUser.name}>
-              <div className="w-9 h-9 rounded-2xl overflow-hidden border-2 border-purple-200 dark:border-purple-500/40 shadow-sm ring-2 ring-transparent group-hover:ring-purple-400/40 transition-all duration-200">
-                {currentUser.avatarUrl ? (
-                  <img
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-purple-600 text-white font-bold text-sm flex items-center justify-center">
-                    {currentUser.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              {/* Online indicator */}
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-dark-900" />
-              {/* Name tooltip */}
-              <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-[11px] font-medium rounded-lg shadow-lg whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                <div className="font-bold">{currentUser.name}</div>
-                <div className="text-slate-400 text-[10px]">{currentUser.email}</div>
-              </div>
-            </div>
-          )}
           
           {/* Gemini API Key Status Indicator */}
           <button

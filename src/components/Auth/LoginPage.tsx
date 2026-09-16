@@ -2,11 +2,8 @@ import React, { useState } from 'react';
 import { 
   Sun, 
   Moon, 
-  Eye, 
-  EyeOff, 
   ChevronLeft, 
-  ChevronRight,
-  Loader2
+  ChevronRight
 } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import { authService } from '../../services/authService';
@@ -22,16 +19,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   theme,
   toggleTheme,
 }) => {
-  const [emailInput, setEmailInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  
-  // Google Account Selector modal
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [modalEmailInput, setModalEmailInput] = useState('');
-  
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [, setIsLoading] = useState(false);
 
   // Quote slide index for right illustration panel
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -43,7 +31,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       timeOfDay: "Dusk Chill"
     },
     {
-      quote: "Smart Dual-Agent AI with Gemini & Kimi.",
+      quote: "Smart Dual-Agent AI with Gemini & OpenRouter.",
       highlight: "Rangkum & Prediksi Ujian",
       timeOfDay: "Night Focus"
     },
@@ -96,39 +84,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   }, [theme, onLoginSuccess]);
 
-  // Perform Google Login directly with isolated storage
-  const handlePerformLogin = async (emailToUse: string, nameToUse?: string) => {
-    setIsLoading(true);
-    setErrorMsg(null);
-    try {
-      const user = await authService.loginWithGoogleDirect(emailToUse, nameToUse);
-      setIsAccountModalOpen(false);
-      onLoginSuccess(user);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal masuk akun');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Form submit handler: langsung masuk dengan email yang diketik atau buka modal pilihan akun
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (emailInput.trim()) {
-      handlePerformLogin(emailInput.trim());
-    } else {
-      setIsAccountModalOpen(true);
-    }
-  };
-
-  // Modal custom email submit
-  const handleModalSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (modalEmailInput.trim()) {
-      handlePerformLogin(modalEmailInput.trim());
-    }
-  };
-
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-10 relative overflow-hidden bg-gradient-to-br from-[#c99587] via-[#a8746b] to-[#734b5f] dark:from-[#140f21] dark:via-[#0e0a19] dark:to-[#08060f] transition-colors duration-300 select-none">
       
@@ -163,68 +118,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </p>
           </div>
 
-          {/* Error Message */}
-          {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 text-xs text-rose-700 dark:text-rose-300">
-              {errorMsg}
-            </div>
-          )}
-
-          {/* Main Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            {/* Email Field */}
-            <div className="space-y-1.5">
-              <input
-                type="email"
-                placeholder="Email (contoh: nama@gmail.com)"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                className="w-full bg-white dark:bg-dark-800 border border-slate-200/90 dark:border-dark-border rounded-2xl px-4 py-3.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 transition-all"
-              />
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-1.5 relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password (opsional via Google)"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full bg-white dark:bg-dark-800 border border-slate-200/90 dark:border-dark-border rounded-2xl px-4 py-3.5 pr-11 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-purple-500/40 transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {/* Recovery Password Link */}
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsAccountModalOpen(true)}
-                className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-              >
-                Recovery Password
-              </button>
-            </div>
-
-            {/* Sign In Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-4 bg-[#8b5c6d] hover:bg-[#7a4e5e] dark:bg-purple-600 dark:hover:bg-purple-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md shadow-[#8b5c6d]/30 dark:shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span>Sign In</span>
-              )}
-            </button>
-          </form>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Akses aplikasi menggunakan autentikasi Google resmi.
+          </p>
 
           {/* Divider */}
           <div className="flex items-center gap-3">
@@ -235,36 +131,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="flex-1 border-t border-slate-200 dark:border-dark-border" />
           </div>
 
-          {/* Single Google Login Button (Native GSI + Fallback) */}
+          {/* Official Google Identity Services button */}
           <div className="flex flex-col items-center justify-center gap-2">
             <div id="google-gsi-native-btn" className="empty:hidden" />
-            <button
-              type="button"
-              onClick={() => setIsAccountModalOpen(true)}
-              disabled={isLoading}
-              className="w-14 h-14 bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-750 border border-slate-200/90 dark:border-dark-border rounded-2xl shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer group"
-              title="Masuk dengan Akun Google"
-            >
-              {/* Official Google SVG Icon */}
-              <svg className="w-6 h-6 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -346,115 +215,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       </div>
 
-      {/* ================= GOOGLE ACCOUNT SELECTOR MODAL (100% Guaranteed Success) ================= */}
-      {isAccountModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#181326] dark:bg-dark-900 border border-purple-900/40 dark:border-dark-border rounded-3xl p-6 sm:p-7 max-w-md w-full space-y-5 shadow-2xl text-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            
-            {/* Modal Header */}
-            <div className="flex items-center gap-3.5 border-b border-purple-900/30 pb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-md shrink-0">
-                <svg className="w-7 h-7" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z" />
-                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-extrabold text-base text-white">Pilih Akun Google</h3>
-                <p className="text-xs text-slate-400">Masuk ke PippayLearning</p>
-              </div>
-            </div>
-
-            {/* Quick Demo Accounts */}
-            <div className="space-y-2.5">
-              <p className="text-xs font-semibold text-slate-300">
-                Pilih akun cepat atau masukkan email Google Anda:
-              </p>
-              
-              {/* Account 1: Raifan Habib */}
-              <button
-                type="button"
-                onClick={() => handlePerformLogin('raifanhabib31@gmail.com', 'Raifan Habib')}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#23183d] hover:bg-[#2e1f52] border border-purple-500/30 transition-all text-left group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                    R
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
-                      Raifan Habib
-                    </div>
-                    <div className="text-[11px] text-slate-400">raifanhabib31@gmail.com</div>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-purple-600 text-white shadow-xs">
-                  Utama
-                </span>
-              </button>
-
-              {/* Account 2: coooeeezz@gmail.com */}
-              <button
-                type="button"
-                onClick={() => handlePerformLogin('coooeeezz@gmail.com', 'Cooz Dev')}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#1c162e] hover:bg-[#251d3d] border border-purple-900/40 transition-all text-left group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                    C
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
-                      Cooz Dev
-                    </div>
-                    <div className="text-[11px] text-slate-400">coooeeezz@gmail.com</div>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-900 text-indigo-200">
-                  Google
-                </span>
-              </button>
-            </div>
-
-            {/* Custom Google Email Input Form */}
-            <form onSubmit={handleModalSubmit} className="space-y-2 pt-3 border-t border-purple-900/30">
-              <label className="block text-xs font-semibold text-slate-300">
-                Atau Ketik Email Google Anda:
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  required
-                  placeholder="akunanda@gmail.com"
-                  value={modalEmailInput}
-                  onChange={(e) => setModalEmailInput(e.target.value)}
-                  className="flex-1 bg-[#120d20] border border-purple-900/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-purple-500/50"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !modalEmailInput.trim()}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md disabled:opacity-40 cursor-pointer"
-                >
-                  Masuk
-                </button>
-              </div>
-            </form>
-
-            {/* Modal Cancel Button */}
-            <div className="flex justify-end pt-1">
-              <button
-                type="button"
-                onClick={() => setIsAccountModalOpen(false)}
-                className="px-4 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
